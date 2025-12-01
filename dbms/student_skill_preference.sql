@@ -42,3 +42,9 @@ CREATE TABLE student_skills_preferences (
         ON DELETE CASCADE
 );
 
+-- Adding sector preferences without CHECK contraint as yet. Can be modified later
+ALTER TABLE student_skills_preferences
+ADD COLUMN sector_preference_1 TEXT,
+ADD COLUMN sector_preference_2 TEXT,
+ADD COLUMN sector_preference_3 TEXT;
+
