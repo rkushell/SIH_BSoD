@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: aadhaar-postgres
+    environment:
+      POSTGRES_USER: hackuser
+      POSTGRES_PASSWORD: hackpass
+      POSTGRES_DB: hackathon
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hackuser -d hackathon"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./api
+    container_name: aadhaar-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://hackuser:hackpass@postgres:5432/hackathon
+      SECRET_KEY: "dev_secret_for_hackathon"
+    # For development: mount the api folder so edits reflect immediately.
+    # If you prefer to use the built image only, remove this line.
+    volumes:
+      - ./api:/app
+
+volumes:
+  pgdata:
