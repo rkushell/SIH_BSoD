@@ -1,51 +1,46 @@
-"use client"
+// app/company-portal/page.tsx
+"use client";
+import React from "react";
+import RoleList from "@/components/company-portal/row-list";
+import PendingApplications from "@/components/company-portal/pending-applications";
+import StatsRow from "@/components/company-portal/stats-row";
 
-import { useState } from "react"
-import { useTheme } from "@/hooks/use-theme"
-import Header from "@/components/internship-portal/header"
-import CompanyAuthDialog from "@/components/ui/company-auth-dialog"
-// Try relative import instead
-import CompanyPortalContent from "../../components/company-portal/company-portal-content"
 
-export default function CompanyPortalPage() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [authDialogOpen, setAuthDialogOpen] = useState(true)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const { isDark, toggleDarkMode } = useTheme()
-
-  const handleAuthSuccess = () => {
-    setIsAuthenticated(true)
-  }
-
+export default function CompanyPortalDashboardPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header
-        isDark={isDark}
-        toggleDarkMode={toggleDarkMode}
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-      />
-      <main className="w-full">
-        {isAuthenticated ? (
-          <CompanyPortalContent />
-        ) : (
-          <div className="w-full py-20 px-4 md:px-8">
-            <div className="max-w-4xl mx-auto text-center">
-              <h1 className="text-3xl md:text-4xl font-bold mb-4">Company Portal</h1>
-              <p className="text-muted-foreground">
-                Please authenticate to access your company portal
-              </p>
-            </div>
-          </div>
-        )}
-      </main>
+    <div className="w-full">
+      <StatsRow />
 
-      {/* Authentication Dialog */}
-      <CompanyAuthDialog
-        open={authDialogOpen && !isAuthenticated}
-        onOpenChange={setAuthDialogOpen}
-        onSuccess={handleAuthSuccess}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        <div>
+          <div className="bg-card border border-border rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Active Roles</h2>
+              <button
+                className="px-3 py-2 rounded-md bg-primary/10 text-primary"
+                onClick={() => {
+                  /* open add role dialog later */
+                }}
+              >
+                + Add Role
+              </button>
+            </div>
+
+            <RoleList />
+          </div>
+        </div>
+
+        <div>
+          <div className="bg-card border border-border rounded-xl p-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold">Pending Applications</h2>
+              <button className="text-sm text-muted-foreground">View All →</button>
+            </div>
+
+            <PendingApplications />
+          </div>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
