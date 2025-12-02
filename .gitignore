@@ -1,0 +1,12 @@
+﻿SIH_BSoD/
+# Node / Next / common
+node_modules/
+.next/
+dist/
+.vscode/
+.env
+*.log
+*.sqlite
+# Large data or agent state
+*.bin
+*.csv
