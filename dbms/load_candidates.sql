@@ -30,7 +30,7 @@ CREATE TEMPORARY TABLE staging_candidates (
 
 -- 3. Use the CLIENT-SIDE \copy command to load data from the CSV file.
 -- Note the path MUST be correct from your perspective, as the client reads it.
-\copy staging_candidates FROM '/Users/srinidhi/SIH_BSoD/dbms/pm_internship_candidates_6000.csv' DELIMITER ',' CSV HEADER;
+\copy staging_candidates FROM '/Users/srinidhi/SIH_BSoD/dbms/data/pm_internship_candidates_6000.csv' DELIMITER ',' CSV HEADER;
 
 -- 4. Insert the cleaned and transformed data into the final table.
 INSERT INTO pm_internship_candidates_data (

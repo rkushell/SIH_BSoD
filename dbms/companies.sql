@@ -2,7 +2,7 @@
 CREATE TABLE companies (
 
     --Company ID : Primary key
-    company_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id TEXT PRIMARY KEY,
 
     --Company details
     company_name TEXT NOT NULL,

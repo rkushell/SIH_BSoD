@@ -1,10 +1,11 @@
 
+
 CREATE TABLE internships (
 
     --Internship ID: Primary key
-    internship_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    internship_id TEXT PRIMARY KEY,
 
-    company_id UUID NOT NULL, --Foreign key
+    company_id TEXT NOT NULL, --Foreign key
 
     -- Internship details
     title TEXT NOT NULL,
@@ -62,5 +63,9 @@ CHECK (
 ALTER TABLE internships
 ADD CONSTRAINT chk_internship_location
 CHECK (
-    location IN ('Office', 'Remote', 'Hybrid')
+    location IN ('Office', 'Factory', 'Remote')
 );
+
+DROP TABLE internships;
+DROP TABLE companies;
+

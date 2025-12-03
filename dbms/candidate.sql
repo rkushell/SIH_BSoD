@@ -1,7 +1,7 @@
 CREATE TABLE candidate (
-    student_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id TEXT PRIMARY KEY,
 
-    internship_id UUID NOT NULL,
+    internship_id TEXT NOT NULL,
 
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
@@ -62,8 +62,8 @@ CREATE TABLE candidate (
         array_length(company_preferences, 1) <= 6
     ),
 
-    CONSTRAINT fk_internship
-        FOREIGN KEY (internship_id)
-        REFERENCES internships(internship_id)
-        ON DELETE CASCADE
+    -- CONSTRAINT fk_internship
+    --     FOREIGN KEY (internship_id)
+    --     REFERENCES internships(internship_id)
+    --     ON DELETE CASCADE
 );

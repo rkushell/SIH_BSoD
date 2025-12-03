@@ -1,8 +1,19 @@
 
+-- 1. Safely drop and recreate the final, simplified table
+DROP TABLE IF EXISTS pm_internship_data CASCADE;
 
--- *** CORRECTED INTERNSHIPS DATA LOAD SCRIPT (v3) ***
+CREATE TABLE pm_internship_data (
+    -- Using the original text ID as the Primary Key
+    internship_id TEXT PRIMARY KEY,
+    sector TEXT,
+    tier TEXT,
+    capacity INTEGER,
+    required_skills TEXT[], -- Final destination for the array of skills
+    stipend NUMERIC,
+    location_type TEXT
+);
 
--- 1. Create a TEMPORARY staging table to load the raw CSV data.
+-- 2. Safely drop and recreate the TEMPORARY staging table
 DROP TABLE IF EXISTS staging_internships CASCADE;
 
 CREATE TEMPORARY TABLE staging_internships (
@@ -10,39 +21,40 @@ CREATE TEMPORARY TABLE staging_internships (
     sector TEXT,
     tier TEXT,
     capacity INTEGER,
-    required_skills TEXT,
+    required_skills TEXT, -- Load raw semicolon-delimited string here
     stipend NUMERIC,
     location_type TEXT
 );
 
--- 2. Use the CLIENT-SIDE \copy command to load data from the CSV file.
--- Note the path MUST be correct from your perspective.
-\copy staging_internships (internship_ref_id, sector, tier, capacity, required_skills, stipend, location_type) FROM '/Users/srinidhi/SIH_BSoD/dbms/internships_pm_internships.csv' DELIMITER ',' CSV HEADER;
+-- 3. Use the CLIENT-SIDE \copy command to load data from the CSV file.
+-- Update the path as necessary.
+-- Use this line if your file is in the 'data/' subdirectory:
+\copy staging_internships (internship_ref_id, sector, tier, capacity, required_skills, stipend, location_type) FROM '/Users/srinidhi/SIH_BSoD/dbms/data/internships_pm_internships.csv' DELIMITER ',' CSV HEADER
 
--- 3. Insert the cleaned and transformed data into your main 'internships' table.
--- We use gen_random_uuid() to satisfy the UUID primary key constraint.
-INSERT INTO internships (
+-- 4. Insert the cleaned and transformed data into the new final table.
+INSERT INTO pm_internship_data (
     internship_id,
-    company_id,
-    title,
-    sector_category,
+    sector,
     tier,
     capacity,
     required_skills,
     stipend,
-    location
+    location_type
 )
 SELECT
-    gen_random_uuid() AS internship_id,
-    '00000000-0000-0000-0000-000000000001'::UUID AS company_id,
-    'Internship ' || s.internship_ref_id AS title,
+    s.internship_ref_id AS internship_id,
     s.sector,
-    s.tier,
+    -- Transformation: Fix 'TierX' to 'Tier X' for readability/consistency
+    REPLACE(s.tier, 'Tier', 'Tier ') AS tier,
     s.capacity,
+    -- Transformation: Convert semicolon-delimited string to a PostgreSQL TEXT array
     regexp_split_to_array(s.required_skills, E';') AS required_skills,
     s.stipend,
     s.location_type
 FROM staging_internships s;
 
--- 4. Clean up
+-- 5. Clean up the temporary staging table.
 DROP TABLE staging_internships;
+
+-- 6. Check the result
+SELECT COUNT(*) FROM pm_internship_data;
