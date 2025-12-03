@@ -1,0 +1,5 @@
+[build]
+builder = "docker"
+
+# IMPORTANT: Tell Railway where your Dockerfile is
+projectPath = "ml-service/pm_internship_pipeline"
