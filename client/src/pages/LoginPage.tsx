@@ -1,28 +1,24 @@
 // src/pages/LoginPage.tsx
 import React, { useState } from "react";
-import { useAuth, REDIRECT_KEY } from "@/lib/AuthProvider";
+import { useAuth } from "@/lib/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Lock, Mail, User, Sparkles } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 
 export default function LoginPage(): JSX.Element {
-  const { isAuthenticated, login, signup, logout } = useAuth();
-  const [isSignup, setIsSignup] = useState(false);
-  const [name, setName] = useState("");
+  const { isAuthenticated, loginStudent, logout } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const validate = () => {
-    if (!name.trim() || !email.trim()) {
-      setError("Please enter both name and email.");
+    if (!email.trim()) {
+      setError("Please enter your email.");
       return false;
     }
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -30,12 +26,8 @@ export default function LoginPage(): JSX.Element {
       setError("Enter a valid email.");
       return false;
     }
-    if (!password || password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return false;
-    }
-    if (isSignup && password !== confirmPassword) {
-      setError("Passwords do not match.");
+    if (!password) {
+      setError("Please enter your password.");
       return false;
     }
     setError(null);
@@ -46,29 +38,19 @@ export default function LoginPage(): JSX.Element {
     e?.preventDefault();
     if (!validate()) return;
     setLoading(true);
+    setError(null);
     try {
-      const user = { name: name.trim(), email: email.trim() };
-      if (isSignup) signup(user);
-      else login(user);
-    } catch (err) {
+      await loginStudent(email.trim(), password);
+    } catch (err: any) {
       console.warn("Login error", err);
-      setError("Failed to login.");
+      setError(err.message || "Failed to login.");
+    } finally {
       setLoading(false);
     }
   };
 
   const continueToPortal = () => {
-    try {
-      const redirect = sessionStorage.getItem(REDIRECT_KEY);
-      if (redirect) window.location.href = redirect;
-      else {
-        const portal = sessionStorage.getItem("portalSelected");
-        if (portal) window.location.href = `/${portal}`;
-        else window.location.href = "/";
-      }
-    } catch (e) {
-      window.location.href = "/";
-    }
+    window.location.href = "/student";
   };
 
   return (
@@ -100,18 +82,14 @@ export default function LoginPage(): JSX.Element {
         {/* Content Overlay */}
         <div className="relative z-10 flex flex-col justify-center items-center p-12 text-center">
           <Sparkles className="h-16 w-16 text-primary mb-6 animate-pulse" />
-          <h1 className="text-4xl font-bold mb-4">Welcome to PMIS</h1>
+          <h1 className="text-4xl font-bold mb-4">Student Portal</h1>
           <p className="text-lg text-muted-foreground max-w-md">
-            Prime Minister's Internship Scheme - Empowering India's youth with valuable opportunities
+            Launch your career with the Prime Minister's Internship Scheme.
           </p>
           <div className="mt-8 flex gap-4">
             <div className="flex flex-col items-center">
               <div className="text-3xl font-bold text-primary">50K+</div>
               <div className="text-sm text-muted-foreground">Students</div>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="text-3xl font-bold text-primary">1000+</div>
-              <div className="text-sm text-muted-foreground">Companies</div>
             </div>
             <div className="flex flex-col items-center">
               <div className="text-3xl font-bold text-primary">95%</div>
@@ -122,22 +100,17 @@ export default function LoginPage(): JSX.Element {
       </div>
 
       {/* Login Form - Right Column */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-background">
+      <div className="flex-1 flex items-center justify-center p-8 bg-background relative">
         <div className="w-full max-w-md">
           {/* Already Authenticated */}
           {isAuthenticated && (
             <div className="mb-6 flex gap-3">
               <Button onClick={continueToPortal} className="flex-1">
-                Continue to Portal
+                Continue to Student Portal
               </Button>
               <Button
                 onClick={() => {
                   logout && logout();
-                  try {
-                    sessionStorage.removeItem("portalSelected");
-                    sessionStorage.removeItem(REDIRECT_KEY);
-                  } catch (e) { }
-                  window.location.replace("/");
                 }}
                 variant="destructive"
               >
@@ -146,151 +119,92 @@ export default function LoginPage(): JSX.Element {
             </div>
           )}
 
-          <Card>
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold">
-                {isSignup ? "Create an account" : "Welcome back"}
-              </CardTitle>
-              <CardDescription>
-                {isSignup
-                  ? "Enter your details to create your account"
-                  : "Enter your credentials to access your account"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={submit} className="space-y-4">
-                {/* Name Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="name"
-                      placeholder="John Doe"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Email Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="john@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Password Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 pr-10"
-                      required
-                      minLength={6}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Confirm Password Field (Signup only) */}
-                {isSignup && (
+          {!isAuthenticated && (
+            <Card>
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-2xl font-bold">Student Login</CardTitle>
+                <CardDescription>Enter your credentials to access your account</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={submit} className="space-y-4">
+                  {/* Email Field */}
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Label htmlFor="email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="john@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
-                        id="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
+                        id="password"
+                        type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         className="pl-10 pr-10"
                         required
-                        minLength={6}
                       />
                       <button
                         type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
                       >
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                   </div>
-                )}
 
-                {/* Error Message */}
-                {error && (
-                  <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-                    {error}
+                  {/* Error Message */}
+                  {error && (
+                    <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Submit Button */}
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Please wait..." : "Sign In"}
+                  </Button>
+
+                  {/* Link to Register */}
+                  <div className="text-center text-sm">
+                    <span className="text-muted-foreground">Don't have an account?</span>{" "}
+                    <Link href="/register">
+                      <span className="text-primary hover:underline font-medium cursor-pointer">Register</span>
+                    </Link>
                   </div>
-                )}
 
-                {/* Submit Button */}
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Please wait..." : isSignup ? "Create Account" : "Sign In"}
-                </Button>
-
-                {/* Toggle Login/Signup */}
-                <div className="text-center text-sm">
-                  <span className="text-muted-foreground">
-                    {isSignup ? "Already have an account?" : "Don't have an account?"}
-                  </span>{" "}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsSignup(!isSignup);
-                      setError(null);
-                      setPassword("");
-                      setConfirmPassword("");
-                    }}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    {isSignup ? "Sign in" : "Sign up"}
-                  </button>
-                </div>
-
-                {/* Back to Home */}
-                <div className="text-center">
-                  <Link href="/">
-                    <Button variant="ghost" size="sm" type="button">
-                      ← Back to Home
-                    </Button>
-                  </Link>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+                  {/* Back to Home */}
+                  <div className="text-center">
+                    <Link href="/">
+                      <Button variant="ghost" size="sm" type="button">
+                        ← Back to Home
+                      </Button>
+                    </Link>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
       {/* Floating Animation Styles */}
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%, 100% {
             transform: translateY(0) rotate(0deg);

@@ -12,6 +12,9 @@ import StudentPortal from "@/pages/StudentPortal";
 import CompanyPortal from "@/pages/CompanyPortal";
 import AdminPortal from "@/pages/AdminPortal";
 import LoginPage from "@/pages/LoginPage";
+import RegisterPage from "@/pages/RegisterPage";
+import CompanyAuthPage from "@/pages/CompanyAuthPage";
+import AdminLoginPage from "@/pages/AdminLoginPage";
 import { AuthProvider, useAuth, REDIRECT_KEY } from "@/lib/AuthProvider";
 // provider for selected candidates (shared context)
 import { SelectedCandidatesProvider } from "@/components/SelectedCandidates";
@@ -48,7 +51,15 @@ function ProtectedRoute({
       } catch (e) {
         console.warn("[ProtectedRoute] failed to save redirect", e);
       }
-      window.location.replace("/login");
+
+      // Redirect to appropriate login page
+      if (portalKey === "company") {
+        window.location.replace("/company-login");
+      } else if (portalKey === "admin") {
+        window.location.replace("/admin-login");
+      } else {
+        window.location.replace("/login");
+      }
     }
     return null;
   }
@@ -89,6 +100,9 @@ function Router() {
       </Route>
 
       <Route path="/login" component={LoginPage} />
+      <Route path="/register" component={RegisterPage} />
+      <Route path="/company-login" component={CompanyAuthPage} />
+      <Route path="/admin-login" component={AdminLoginPage} />
 
       <Route component={NotFound} />
     </Switch>

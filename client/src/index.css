@@ -111,6 +111,7 @@
   textarea,
   select {
     color: hsl(var(--foreground));
+    background-color: transparent;
   }
 
   input::placeholder,

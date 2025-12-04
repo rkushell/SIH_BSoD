@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import LogoutButton from "@/components/LogoutButton";
+import { useAuth } from "@/lib/AuthProvider"; // Import useAuth
 import { AuthGate } from "@/components/AuthGate"; // using the project's AuthGate for mock auth
 import RegistrationWithAadhar from "@/components/RegistrationWithAadhar";
 import { ApplicationTracker } from "@/components/ApplicationTracker";
@@ -45,12 +46,12 @@ function safeGet(key: string) {
 function safeSet(key: string, value: string) {
   try {
     sessionStorage.setItem(key, value);
-  } catch {}
+  } catch { }
 }
 function safeRemove(key: string) {
   try {
     sessionStorage.removeItem(key);
-  } catch {}
+  } catch { }
 }
 
 /* --- SAMPLE_INTERNSHIPS: 8 items with requested fields --- */
@@ -163,8 +164,9 @@ const SAMPLE_INTERNSHIPS = [
 
 /* ------------------ StudentPortal main component ------------------ */
 export default function StudentPortal() {
-  // Determine auth/profile and compute initial stage explicitly
-  const authed = safeGet("portalAuth") === "student";
+  // Use AuthProvider to check authentication
+  const { isAuthenticated, user } = useAuth();
+  const authed = isAuthenticated && user?.role === "student";
   const hasProfile = isStudentProfileComplete();
 
   // Application list: maintain up to 6 preferred internships in decreasing priority order (index 0 = highest)
@@ -187,7 +189,7 @@ export default function StudentPortal() {
     try {
       const raw = safeGet("offeredInternships");
       if (raw) return JSON.parse(raw);
-    } catch {}
+    } catch { }
     // default: populate two offers for demo
     return [
       { ...SAMPLE_INTERNSHIPS[0], offerLetter: "Offer Letter: Congratulations! You are offered the Product Management internship.", status: "pending" },
@@ -199,7 +201,7 @@ export default function StudentPortal() {
   useEffect(() => {
     try {
       safeSet("offeredInternships", JSON.stringify(offered));
-    } catch {}
+    } catch { }
   }, [offered]);
 
   // debug: log auth/profile as soon as component mounts (remove later if you like)
@@ -207,10 +209,11 @@ export default function StudentPortal() {
     console.log("StudentPortal mount -> authed:", authed, "hasProfile:", hasProfile);
   }, []); // run once
 
-  // initialStage: explicit logic so we cannot accidentally skip the profile
-  let initialStage: "eligibility" | "auth" | "profile" | "dashboard" = "auth";
+  // initialStage: explicit logic - redirect to login if not authenticated
+  let initialStage: "eligibility" | "auth" | "profile" | "dashboard" = "dashboard";
   if (!authed) {
-    initialStage = "auth";
+    // Will be redirected to login by useEffect below
+    initialStage = "dashboard";
   } else if (!hasProfile) {
     initialStage = "profile";
   } else {
@@ -227,7 +230,8 @@ export default function StudentPortal() {
       if (e.key === "portalAuth" || e.key === "studentProfile") {
         const nowAuthed = safeGet("portalAuth") === "student";
         if (!nowAuthed) {
-          setStage("auth");
+          // Redirect to login instead of showing auth stage
+          window.location.href = "/login";
           return;
         }
         setStage(isStudentProfileComplete() ? "dashboard" : "profile");
@@ -241,7 +245,7 @@ export default function StudentPortal() {
   useEffect(() => {
     try {
       safeSet("appliedInternships", JSON.stringify(appliedList));
-    } catch {}
+    } catch { }
   }, [appliedList]);
 
   // After auth completes, go to profile if the profile isn't complete.
@@ -262,7 +266,7 @@ export default function StudentPortal() {
     try {
       safeRemove("portalSelected");
       safeRemove("portalAuth");
-    } catch {}
+    } catch { }
     window.location.replace("/");
   }
 
@@ -313,6 +317,13 @@ export default function StudentPortal() {
     alert("You rejected the offer.");
   }
 
+  // If not authenticated, redirect to login page instead of showing intermediate auth page
+  useEffect(() => {
+    if (!authed) {
+      window.location.href = "/login";
+    }
+  }, [authed]);
+
   /* ------------------- Stage: eligibility (optional) ------------------- */
   if (stage === "eligibility") {
     return (
@@ -323,39 +334,13 @@ export default function StudentPortal() {
             <h1 className="text-3xl font-bold mb-2">Welcome to Student Portal</h1>
             <p className="text-muted-foreground">Let's verify your eligibility for the PM Internship Scheme</p>
           </motion.div>
-          <EligibilityChecker onComplete={() => setStage("auth")} />
+          <EligibilityChecker onComplete={() => setStage("profile")} />
         </div>
       </div>
     );
   }
 
-  /* ------------------- Stage: auth ------------------- */
-  if (stage === "auth") {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header showNav={false} />
-        <div className="container mx-auto px-4 py-12">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">Student Portal — Sign in</h1>
-            <p className="text-muted-foreground">Sign in to continue. After signing in you'll complete registration.</p>
-          </motion.div>
-
-          <AuthGate portalKey="student">
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground mb-4">After signing in you'll be redirected to complete registration.</p>
-              <div className="flex items-center justify-center">
-                <button onClick={() => { /* AuthGate will set session storage; stage will update via storage listener */ }} className="px-4 py-2 rounded border">Open Sign In</button>
-              </div>
-            </div>
-          </AuthGate>
-
-          <div className="mt-6 text-center">
-            <Button variant="outline" onClick={leavePortal}>← Back to Home</Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  /* ------------------- Stage: auth - REMOVED, now redirects to /login ------------------- */
 
   /* ------------------- Stage: profile (registration required) ------------------- */
   if (stage === "profile") {
@@ -386,7 +371,7 @@ export default function StudentPortal() {
   try {
     const raw = safeGet("studentProfile");
     if (raw) profile = JSON.parse(raw);
-  } catch {}
+  } catch { }
 
   const eligible = SAMPLE_INTERNSHIPS; // for now show all
 
@@ -414,7 +399,7 @@ export default function StudentPortal() {
           </div>
 
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setStage("profile") } data-testid="button-edit-profile">
+            <Button variant="outline" onClick={() => setStage("profile")} data-testid="button-edit-profile">
               Set Profile
             </Button>
             <Button variant="outline" onClick={() => { /* open feedback dialog */ }}>
@@ -520,11 +505,13 @@ export default function StudentPortal() {
                           <Button size="sm" onClick={() => handleApply(job)} disabled={appliedList.some((i) => i.internshipId === job.internshipId)}>
                             {appliedList.some((i) => i.internshipId === job.internshipId) ? "Selected" : "Apply"}
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => { alert(`${job.title} — ${job.companyId}
+                          <Button variant="ghost" size="sm" onClick={() => {
+                            alert(`${job.title} — ${job.companyId}
 
 ${job.duration} · ${job.stipend}
 
-Description: ${job.description || "—"}`); }}>
+Description: ${job.description || "—"}`);
+                          }}>
                             Details
                           </Button>
                         </div>
