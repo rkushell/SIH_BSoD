@@ -3,145 +3,97 @@
 @tailwind utilities;
 
 /* LIGHT MODE - Pastel Palette */
+/* PREMIUM LIGHT THEME (Default) - Clean & Modern */
 :root {
-  /* Page */
-  --background: 260 60% 97%;       /* pale lavender page bg */
-  --foreground: 250 12% 12%;       /* dark, readable text */
+  /* Typography */
+  --font-sans: 'Outfit', sans-serif;
 
-  /* Cards & surfaces */
+  /* Page - Clean White */
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+
+  /* Cards & Surfaces - White/Off-White */
   --card: 0 0% 100%;
-  --card-foreground: 250 12% 12%;
-  --card-border: 260 25% 92%;
+  --card-foreground: 240 10% 3.9%;
+  --card-border: 240 5.9% 90%;
 
-  --border: 260 25% 90%;
-  --input: 260 25% 90%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
 
-  /* Vivid component colors (darker / high contrast) */
-  --primary: 260 60% 55%;          /* richer lavender — primary buttons/headers */
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+
+  /* Primary - Electric Purple (Consistent Brand Color) */
+  --primary: 263 80% 60%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 275 55% 48%;        /* deep lilac — secondary components */
-  --secondary-foreground: 0 0% 100%;
+  /* Secondary - Light Purple/Gray */
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
 
-  --accent: 205 90% 48%;           /* vivid sky blue — links, highlights */
-  --accent-foreground: 0 0% 100%;
+  /* Accent - Soft Purple Highlight */
+  --accent: 263 80% 96%;
+  --accent-foreground: 240 5.9% 10%;
 
-  /* Muted & support */
-  --muted: 260 30% 94%;
-  --muted-foreground: 260 20% 42%;
+  /* Muted */
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
 
-  --destructive: 340 75% 52%;      /* vivid blush for destructive actions */
-  --destructive-foreground: 0 0% 100%;
+  /* Destructive */
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
 
-  --ring: 205 90% 60%;
+  --ring: 263 80% 60%;
 
   /* Sidebar */
-  --sidebar: 260 60% 96%;
-  --sidebar-foreground: 250 12% 12%;
-  --sidebar-border: 260 25% 90%;
-  --sidebar-primary: var(--primary);
-  --sidebar-accent: var(--secondary);
-  --sidebar-ring: var(--ring);
+  --sidebar: 0 0% 98%;
+  --sidebar-foreground: 240 5.3% 26.1%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-primary: 240 5.9% 10%;
+  --sidebar-accent: 240 4.8% 95.9%;
+  --sidebar-ring: 217.2 91.2% 59.8%;
 
-  /* Charts (vivid pastel series) */
-  --chart-1: 260 60% 55%;
-  --chart-2: 275 55% 48%;
-  --chart-3: 205 90% 48%;
-  --chart-4: 330 70% 58%;
-  --chart-5: 180 55% 52%;
+  /* Charts - Vibrant */
+  --chart-1: 263 80% 60%;
+  --chart-2: 280 75% 55%;
+  --chart-3: 250 80% 65%;
+  --chart-4: 300 70% 50%;
+  --chart-5: 220 80% 60%;
 }
 
+/* Dark Mode - Identical to Default (Unified Theme) */
 .dark {
-  /* Dark page */
-  --background: 260 30% 10%;       /* deep purple background */
-  --foreground: 260 20% 96%;
-
-  /* Cards & surfaces */
-  --card: 260 40% 14%;
-  --card-foreground: 260 20% 96%;
-  --card-border: 260 30% 20%;
-
-  --border: 260 30% 20%;
-  --input: 260 30% 22%;
-
-  /* Vivid component colors — slightly brighter in dark mode */
-  --primary: 260 60% 68%;          /* lavender, brighter for contrast on dark BG */
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 240 4% 5%;
+  --card-foreground: 0 0% 100%;
+  --card-border: 240 4% 12%;
+  --popover: 240 4% 5%;
+  --popover-foreground: 0 0% 100%;
+  --border: 240 4% 12%;
+  --input: 240 4% 12%;
+  --primary: 263 80% 60%;
   --primary-foreground: 0 0% 100%;
-
-  --secondary: 275 55% 64%;
+  --secondary: 263 30% 15%;
   --secondary-foreground: 0 0% 100%;
-
-  --accent: 205 90% 70%;
-  --accent-foreground: 0 0% 8%;
-
-  --muted: 260 30% 18%;
-  --muted-foreground: 260 20% 70%;
-
-  --destructive: 340 75% 62%;
+  --accent: 263 80% 60%;
+  --accent-foreground: 0 0% 100%;
+  --muted: 240 4% 12%;
+  --muted-foreground: 240 5% 65%;
+  --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-
-  --ring: 205 90% 70%;
-
-  --sidebar: 260 40% 12%;
-  --sidebar-foreground: 260 20% 96%;
-  --sidebar-border: 260 30% 20%;
-  --sidebar-primary: var(--primary);
-  --sidebar-accent: var(--secondary);
-  --sidebar-ring: var(--ring);
-
-  /* Charts */
-  --chart-1: 260 60% 68%;
-  --chart-2: 275 55% 64%;
-  --chart-3: 205 90% 70%;
-  --chart-4: 330 70% 68%;
-  --chart-5: 180 55% 66%;
-}
-
-
-.dark {
-  /* Dark page */
-  --background: 260 30% 10%;       /* deep purple background */
-  --foreground: 260 20% 96%;
-
-  /* Cards & surfaces */
-  --card: 260 40% 14%;
-  --card-foreground: 260 20% 96%;
-  --card-border: 260 30% 20%;
-
-  --border: 260 30% 20%;
-  --input: 260 30% 22%;
-
-  /* Vivid component colors — slightly brighter in dark mode */
-  --primary: 260 60% 68%;          /* lavender, brighter for contrast on dark BG */
-  --primary-foreground: 0 0% 100%;
-
-  --secondary: 275 55% 64%;
-  --secondary-foreground: 0 0% 100%;
-
-  --accent: 205 90% 70%;
-  --accent-foreground: 0 0% 8%;
-
-  --muted: 260 30% 18%;
-  --muted-foreground: 260 20% 70%;
-
-  --destructive: 340 75% 62%;
-  --destructive-foreground: 0 0% 100%;
-
-  --ring: 205 90% 70%;
-
-  --sidebar: 260 40% 12%;
-  --sidebar-foreground: 260 20% 96%;
-  --sidebar-border: 260 30% 20%;
-  --sidebar-primary: var(--primary);
-  --sidebar-accent: var(--secondary);
-  --sidebar-ring: var(--ring);
-
-  /* Charts */
-  --chart-1: 260 60% 68%;
-  --chart-2: 275 55% 64%;
-  --chart-3: 205 90% 70%;
-  --chart-4: 330 70% 68%;
-  --chart-5: 180 55% 66%;
+  --ring: 263 80% 60%;
+  --sidebar: 0 0% 0%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-border: 240 4% 12%;
+  --sidebar-primary: 263 80% 60%;
+  --sidebar-accent: 263 30% 15%;
+  --sidebar-ring: 263 80% 60%;
+  --chart-1: 263 80% 60%;
+  --chart-2: 280 75% 55%;
+  --chart-3: 250 80% 65%;
+  --chart-4: 300 70% 50%;
+  --chart-5: 220 80% 60%;
 }
 
 
@@ -152,6 +104,31 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  /* Ensure input text is visible in dark mode */
+  input,
+  textarea,
+  select {
+    color: hsl(var(--foreground));
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 0.7;
+  }
+
+  /* Autofill styling for dark mode */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus {
+    -webkit-text-fill-color: hsl(var(--foreground));
+    -webkit-box-shadow: 0 0 0px 1000px hsl(var(--background)) inset;
+    transition: background-color 5000s ease-in-out 0s;
   }
 }
 
@@ -169,6 +146,7 @@
   }
 
   .no-default-hover-elevate {}
+
   .no-default-active-elevate {}
 
   .toggle-elevate::before,

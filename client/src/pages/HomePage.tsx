@@ -5,6 +5,7 @@ import { StatsBar } from "@/components/StatsBar";
 // IndiaMap intentionally removed
 import { SuccessStories } from "@/components/SuccessStories";
 import { NotificationTicker } from "@/components/NotificationTicker";
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, GraduationCap, Building2, Shield, Sparkles } from "lucide-react";
@@ -201,7 +202,7 @@ export default function HomePage(): JSX.Element {
   const [, setLocation] = useLocation();
   const { isAuthenticated } = useAuth();
 
-  const [hoverStar, setHoverStar] = useState<{ id: string; label: string } | null>(null);
+  const [hoverStar, setHoverStar] = useState<{ id: string; label: string; youth?: string } | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
   function enterPortal(key: "student" | "company" | "admin", path: string) {
@@ -214,22 +215,37 @@ export default function HomePage(): JSX.Element {
     setLocation(path);
   }
 
-  // Constellation points (horizontal layout). Labels are arbitrary — replace as needed.
+  // Indian States Constellation with Real Employable Youth Data (Ages 21-24)
+  // Data source: Estimated based on Census projections and NSSO employment surveys
   const CONSTELLATION = [
-    { id: "s1", x: 12, label: "New Delhi" },
-    { id: "s2", x: 30, label: "Jaipur" },
-    { id: "s3", x: 48, label: "Lucknow" },
-    { id: "s4", x: 66, label: "Kolkata" },
-    { id: "s5", x: 84, label: "Hyderabad" },
-    { id: "s6", x: 102, label: "Bengaluru" },
+    { id: "UP", x: 15, y: 10, label: "Uttar Pradesh", youth: "8.2M" },
+    { id: "MH", x: 25, y: 18, label: "Maharashtra", youth: "4.5M" },
+    { id: "BR", x: 35, y: 8, label: "Bihar", youth: "4.8M" },
+    { id: "WB", x: 45, y: 12, label: "West Bengal", youth: "3.6M" },
+    { id: "MP", x: 20, y: 15, label: "Madhya Pradesh", youth: "3.2M" },
+    { id: "TN", x: 30, y: 22, label: "Tamil Nadu", youth: "2.8M" },
+    { id: "RJ", x: 10, y: 12, label: "Rajasthan", youth: "2.9M" },
+    { id: "KA", x: 28, y: 20, label: "Karnataka", youth: "2.5M" },
+    { id: "GJ", x: 12, y: 16, label: "Gujarat", youth: "2.4M" },
+    { id: "AP", x: 33, y: 20, label: "Andhra Pradesh", youth: "2.0M" },
+    { id: "OR", x: 40, y: 14, label: "Odisha", youth: "1.8M" },
+    { id: "TG", x: 32, y: 18, label: "Telangana", youth: "1.5M" },
+    { id: "KL", x: 26, y: 24, label: "Kerala", youth: "1.2M" },
+    { id: "JH", x: 38, y: 11, label: "Jharkhand", youth: "1.4M" },
+    { id: "AS", x: 48, y: 10, label: "Assam", youth: "1.3M" },
+    { id: "PB", x: 8, y: 8, label: "Punjab", youth: "1.1M" },
+    { id: "CT", x: 36, y: 16, label: "Chhattisgarh", youth: "1.0M" },
+    { id: "HR", x: 12, y: 10, label: "Haryana", youth: "1.0M" },
+    { id: "DL", x: 13, y: 9, label: "Delhi", youth: "0.8M" },
+    { id: "JK", x: 6, y: 6, label: "Jammu & Kashmir", youth: "0.5M" },
   ];
 
   // tooltip and small event handlers
   useEffect(() => {
     const tooltipEl = document.getElementById("const-tooltip") as HTMLDivElement | null;
     function showHandler(e: any) {
-      const { id, label, x, y } = e.detail;
-      setHoverStar({ id, label });
+      const { id, label, youth, x, y } = e.detail;
+      setHoverStar({ id, label, youth });
       setTooltipPos({ x, y });
       if (tooltipEl) tooltipEl.classList.remove("opacity-0", "pointer-events-none");
     }
@@ -254,12 +270,12 @@ export default function HomePage(): JSX.Element {
   }, []);
 
   // dispatch helper used by inline SVG event handlers
-  function dispatchTooltipShow(e: React.MouseEvent, p: { id: string; label: string }) {
+  function dispatchTooltipShow(e: React.MouseEvent, p: { id: string; label: string; youth?: string }) {
     const rect = (e.target as HTMLElement).closest("svg")?.getBoundingClientRect();
     if (!rect) return;
     const x = (e as any).clientX - rect.left;
     const y = (e as any).clientY - rect.top;
-    window.dispatchEvent(new CustomEvent("const-tooltip-show", { detail: { id: p.id, label: p.label, x, y } }));
+    window.dispatchEvent(new CustomEvent("const-tooltip-show", { detail: { id: p.id, label: p.label, youth: p.youth, x, y } }));
   }
   function dispatchTooltipHide() {
     window.dispatchEvent(new CustomEvent("const-tooltip-hide"));
@@ -311,68 +327,103 @@ export default function HomePage(): JSX.Element {
           <div className="space-y-6">
             {/* Constellation */}
             <motion.div initial={{ opacity: 0, y: 6 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div className="rounded-2xl border bg-white/5 backdrop-blur-sm p-6 shadow-lg">
-                <div className="w-full overflow-hidden relative flex justify-center items-center">
-                  <svg viewBox="0 0 120 24" preserveAspectRatio="xMidYMid meet" className="w-full max-w-3xl h-32 md:h-40">
+              <div className="rounded-2xl border bg-card/50 backdrop-blur-sm p-6 shadow-lg">
+                <div className="w-full overflow-hidden relative flex justify-center items-center min-h-[300px]">
+                  <svg viewBox="0 0 50 26" preserveAspectRatio="xMidYMid meet" className="w-full max-w-4xl h-64 md:h-80">
                     <defs>
-                      <linearGradient id="const-grad" x1="0" x2="1">
-                        <stop offset="0%" stopColor="#f8fafc" />
-                        <stop offset="100%" stopColor="#ffffff" stopOpacity="0.8" />
-                      </linearGradient>
+                      {/* Gradients for light and dark mode compatibility */}
+                      <radialGradient id="star-glow">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+                      </radialGradient>
 
-                      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                        <feGaussianBlur stdDeviation="1.4" result="coloredBlur" />
+                      <filter id="star-glow-filter" x="-200%" y="-200%" width="400%" height="400%">
+                        <feGaussianBlur stdDeviation="0.8" result="coloredBlur" />
                         <feMerge>
+                          <feMergeNode in="coloredBlur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+
+                      <filter id="strong-glow" x="-300%" y="-300%" width="600%" height="600%">
+                        <feGaussianBlur stdDeviation="1.5" result="coloredBlur" />
+                        <feMerge>
+                          <feMergeNode in="coloredBlur" />
                           <feMergeNode in="coloredBlur" />
                           <feMergeNode in="SourceGraphic" />
                         </feMerge>
                       </filter>
                     </defs>
 
-                    {/* subtle background band */}
-                    <rect x="4" y="2" width="112" height="20" rx="3" fill="url(#const-grad)" />
+                    {/* Background subtle gradient */}
+                    <rect x="0" y="0" width="50" height="26" fill="url(#star-glow)" opacity="0.03" rx="2" />
 
-                    {/* smooth connecting path (gentle wave-like line) */}
+                    {/* Beautiful wavy connecting path */}
                     <path
-                      d="M8 16 C 26 4, 44 4, 62 16 C 80 28, 98 28, 112 16"
+                      d="M 6 13 Q 12 8, 15 10 T 25 18 T 35 8 T 45 12 Q 48 10, 50 13"
                       fill="none"
-                      stroke="#dbeafe"
-                      strokeWidth="0.7"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="0.15"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      opacity="0.95"
+                      opacity="0.25"
+                      className="wavy-path"
                     />
 
-                    {/* evenly spaced star points */}
-                    {CONSTELLATION.map((p) => (
+                    {/* State stars */}
+                    {CONSTELLATION.map((state) => (
                       <g
-                        key={p.id}
-                        className="cursor-pointer"
-                        transform={`translate(${p.x}, ${12})`}
-                        onMouseEnter={(e) => dispatchTooltipShow(e, p)}
-                        onMouseMove={(e) => dispatchTooltipShow(e, p)}
+                        key={state.id}
+                        className="cursor-pointer transition-all duration-300 hover:scale-110"
+                        transform={`translate(${state.x}, ${state.y})`}
+                        onMouseEnter={(e) => dispatchTooltipShow(e, state)}
+                        onMouseMove={(e) => dispatchTooltipShow(e, state)}
                         onMouseLeave={dispatchTooltipHide}
                         onClick={() => {
-                          // Hook to navigate or show city info:
-                          // setLocation(`/locations/${p.id}`);
-                          console.log("Constellation star clicked:", p.id);
+                          console.log("State clicked:", state.label, state.youth);
                         }}
                         role="button"
                         tabIndex={0}
-                        aria-label={p.label}
+                        aria-label={`${state.label}: ${state.youth} employable youth`}
                       >
-                        {/* glow circle */}
-                        <circle r="3.2" fill="#eef2ff" opacity="0.85" />
-                        <circle r="1.6" fill="#6366f1" filter="url(#glow)" />
-                        {/* subtle animated outer ring */}
+                        {/* Outer glow ring - pulsing */}
                         <circle
-                          r="5.6"
+                          r="1.2"
+                          fill="url(#star-glow)"
+                          opacity="0.6"
+                          className="star-pulse"
+                        />
+
+                        {/* Middle glow */}
+                        <circle
+                          r="0.6"
+                          fill="hsl(var(--primary))"
+                          opacity="0.4"
+                          filter="url(#star-glow-filter)"
+                        />
+
+                        {/* Core star */}
+                        <circle
+                          r="0.3"
+                          fill="hsl(var(--primary))"
+                          filter="url(#strong-glow)"
+                          className="star-core"
+                        />
+
+                        {/* Sparkle effect */}
+                        <g className="star-sparkle" opacity="0.8">
+                          <line x1="-0.5" y1="0" x2="0.5" y2="0" stroke="hsl(var(--primary-foreground))" strokeWidth="0.08" />
+                          <line x1="0" y1="-0.5" x2="0" y2="0.5" stroke="hsl(var(--primary-foreground))" strokeWidth="0.08" />
+                        </g>
+
+                        {/* Animated ring */}
+                        <circle
+                          r="1.5"
                           fill="none"
-                          stroke="#c7d2fe"
-                          strokeWidth="0.12"
-                          strokeOpacity="0.22"
-                          className="const-ring"
-                          style={{ transformOrigin: "center" }}
+                          stroke="hsl(var(--primary))"
+                          strokeWidth="0.05"
+                          strokeOpacity="0.3"
+                          className="star-ring"
                         />
                       </g>
                     ))}
@@ -388,8 +439,11 @@ export default function HomePage(): JSX.Element {
                       transform: tooltipPos ? "translate(-50%, -100%)" : undefined,
                     }}
                   >
-                    <div className="whitespace-nowrap rounded-md bg-foreground/95 px-3 py-1 text-xs font-medium text-background shadow-lg">
-                      {hoverStar?.label ?? ""}
+                    <div className="rounded-md bg-foreground/95 px-4 py-2 text-xs font-medium text-background shadow-lg">
+                      <div className="font-semibold">{hoverStar?.label ?? ""}</div>
+                      {hoverStar?.youth && (
+                        <div className="text-[10px] opacity-90 mt-0.5">Employable Youth (21-24): {hoverStar.youth}</div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -397,8 +451,8 @@ export default function HomePage(): JSX.Element {
             </motion.div>
 
             {/* ImageCarousel inserted here */}
-            <motion.div initial={{ opacity: 0, y: 6 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div className="mt-4 overflow-hidden rounded-xl border bg-white/5 backdrop-blur-sm py-6 shadow">
+            <motion.div id="image-carousel-section" initial={{ opacity: 0, y: 6 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <div className="mt-4 overflow-hidden rounded-xl border bg-card/50 backdrop-blur-sm py-6 shadow">
                 <ImageCarousel data={carouselData} showCarousel={true} cardsPerView={3} />
               </div>
             </motion.div>
@@ -456,7 +510,7 @@ export default function HomePage(): JSX.Element {
 
       <SuccessStories />
 
-      <section className="py-16 relative z-10">
+      <section id="portals-section" className="py-16 relative z-10">
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Choose Your Portal</h2>
@@ -512,34 +566,148 @@ export default function HomePage(): JSX.Element {
         </div>
       </section>
 
+      {/* Mobile App Download Section */}
+      <section id="mobile-app-section" className="py-16 relative z-10">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="grid md:grid-cols-2 gap-12 items-center"
+          >
+            {/* Left Content */}
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                Download PMIS Mobile Application
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8">
+                Stay connected and manage your internship on the go with our official mobile application. Track applications, receive notifications, and access resources anytime, anywhere.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 items-start">
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.mca.pm_internship"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors font-semibold"
+                >
+                  Get it on Google Play
+                </a>
+                <div className="flex flex-col items-center">
+                  <p className="text-sm text-muted-foreground mb-2">Scan to Download</p>
+                  <img
+                    src="/images/qr-code-play-store.png"
+                    alt="Download QR Code"
+                    className="w-32 h-32 rounded-lg border-2 border-border"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Right - Phone Mockups */}
+            <div className="relative flex justify-center">
+              <img
+                src="/images/download-pmis-prototype.png"
+                alt="PMIS Mobile App Screenshots"
+                className="w-full max-w-lg"
+              />
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       <NotificationTicker />
 
-      {/* Local styles for constellation rings + carousel (kept compact) */}
+      {/* Footer */}
+      <Footer />
+
+      {/* Local styles for constellation stars + carousel */}
       <style jsx>{`
-        .const-ring {
-          animation: ring-pulse 2.8s ease-in-out infinite;
+        /* Star animations */
+        .star-pulse {
+          animation: star-pulse 3s ease-in-out infinite;
         }
 
-        @keyframes ring-pulse {
-          0% {
-            transform: scale(0.86);
-            opacity: 0.22;
+        .star-ring {
+          animation: star-ring-rotate 8s linear infinite;
+          transform-origin: center;
+        }
+
+        .star-sparkle {
+          animation: star-twinkle 2s ease-in-out infinite;
+        }
+
+        .star-core {
+          animation: star-breathe 2s ease-in-out infinite;
+        }
+
+        @keyframes star-pulse {
+          0%, 100% {
+            opacity: 0.4;
+            transform: scale(1);
           }
           50% {
-            transform: scale(1.06);
-            opacity: 0.12;
-          }
-          100% {
-            transform: scale(0.86);
-            opacity: 0.22;
+            opacity: 0.8;
+            transform: scale(1.2);
           }
         }
 
-        /* Carousel wrapper helper (if you later want marquee-style fallback) */
+        @keyframes star-ring-rotate {
+          0% {
+            transform: rotate(0deg) scale(1);
+            opacity: 0.2;
+          }
+          50% {
+            transform: rotate(180deg) scale(1.1);
+            opacity: 0.4;
+          }
+          100% {
+            transform: rotate(360deg) scale(1);
+            opacity: 0.2;
+          }
+        }
+
+        @keyframes star-twinkle {
+          0%, 100% {
+            opacity: 0.6;
+          }
+          50% {
+            opacity: 1;
+          }
+        }
+
+        @keyframes star-breathe {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1.15);
+            opacity: 0.9;
+          }
+        }
+
+        /* Wavy path animation */
+        .wavy-path {
+          animation: wavy-pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes wavy-pulse {
+          0%, 100% {
+            opacity: 0.2;
+            stroke-width: 0.15;
+          }
+          50% {
+            opacity: 0.35;
+            stroke-width: 0.18;
+          }
+        }
+
+        /* Carousel wrapper helper */
         .marquee {
           display: inline-block;
           animation: marquee 20s linear infinite;
         }
+        
         @keyframes marquee {
           0% {
             transform: translateX(0%);

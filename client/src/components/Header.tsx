@@ -13,7 +13,7 @@ interface HeaderProps {
 
 export function Header({ showNav = true }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
 
   // track currently selected portal
   const [portalSelected, setPortalSelected] = useState<string | null>(null);
@@ -39,18 +39,26 @@ export function Header({ showNav = true }: HeaderProps) {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const navItems = [
     { label: "Home", icon: Home, action: () => setLocation("/") },
-    { label: "Gallery", icon: Image, action: () => {} },
-    { label: "Mobile App", icon: Smartphone, action: () => {} },
-    { label: "Support", icon: Headphones, action: () => {} },
+    { label: "Gallery", icon: Image, action: () => scrollToSection("image-carousel-section") },
+    { label: "Portals", icon: Shield, action: () => scrollToSection("portals-section") },
+    { label: "Mobile App", icon: Smartphone, action: () => scrollToSection("mobile-app-section") },
+    { label: "Support", icon: Headphones, action: () => scrollToSection("contact-section") },
   ];
 
   function openStudentProfile() {
     try {
       sessionStorage.setItem("portalSelected", "student");
       sessionStorage.setItem("forceProfileOpen", "1");
-    } catch {}
+    } catch { }
     window.location.href = "/student";
   }
 
@@ -58,7 +66,7 @@ export function Header({ showNav = true }: HeaderProps) {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between gap-4">
-          
+
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3" data-testid="link-home">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
@@ -77,7 +85,22 @@ export function Header({ showNav = true }: HeaderProps) {
           {showNav && (
             <nav className="hidden md:flex items-center gap-1">
 
-              {portalSelected ? (
+              {/* Always show nav items on homepage, otherwise show portal-specific nav */}
+              {location === "/" ? (
+                navItems.map((item) => (
+                  <Button
+                    key={item.label}
+                    variant={item.label === "Home" && location === "/" ? "secondary" : "ghost"}
+                    size="sm"
+                    className="gap-2"
+                    onClick={item.action}
+                    data-testid={`nav-${item.label.toLowerCase().replace(" ", "-")}`}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Button>
+                ))
+              ) : portalSelected ? (
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-gray-600 capitalize">
                     {portalSelected} portal
@@ -114,9 +137,23 @@ export function Header({ showNav = true }: HeaderProps) {
             </nav>
           )}
 
-          {/* Theme / Mobile Menu */}
+          {/* Theme / Auth / Mobile Menu */}
           <div className="flex items-center gap-2">
-            {/* Language selector removed */}
+            {/* Login and Register buttons - only show on homepage or when not in a portal */}
+            {(location === "/" || !portalSelected) && (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" size="sm">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button variant="default" size="sm">
+                    Register
+                  </Button>
+                </Link>
+              </>
+            )}
 
             <ThemeToggle />
 
@@ -138,7 +175,24 @@ export function Header({ showNav = true }: HeaderProps) {
         {mobileMenuOpen && showNav && (
           <nav className="md:hidden pb-4 flex flex-col gap-1">
 
-            {portalSelected ? (
+            {/* Always show nav items on homepage, otherwise show portal-specific nav */}
+            {location === "/" ? (
+              navItems.map((item) => (
+                <Button
+                  key={item.label}
+                  variant={item.label === "Home" && location === "/" ? "secondary" : "ghost"}
+                  className="w-full justify-start gap-2"
+                  onClick={() => {
+                    item.action();
+                    setMobileMenuOpen(false);
+                  }}
+                  data-testid={`mobile-nav-${item.label.toLowerCase().replace(" ", "-")}`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Button>
+              ))
+            ) : portalSelected ? (
               <div className="flex flex-col gap-2 px-2">
 
                 <span className="text-sm text-gray-600 capitalize">
