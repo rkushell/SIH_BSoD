@@ -1,3 +1,5 @@
+// client/src/App.tsx
+import React from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -9,30 +11,105 @@ import HomePage from "@/pages/HomePage";
 import StudentPortal from "@/pages/StudentPortal";
 import CompanyPortal from "@/pages/CompanyPortal";
 import AdminPortal from "@/pages/AdminPortal";
+import LoginPage from "@/pages/LoginPage";
+import { AuthProvider, useAuth, REDIRECT_KEY } from "@/lib/AuthProvider";
+// provider for selected candidates (shared context)
+import { SelectedCandidatesProvider } from "@/components/SelectedCandidates";
+
+/** Read session safely */
+function getPortalSelected(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return sessionStorage.getItem("portalSelected");
+  } catch {
+    return null;
+  }
+}
+
+function ProtectedRoute({
+  portalKey,
+  children,
+}: {
+  portalKey: "student" | "company" | "admin";
+  children: React.ReactNode;
+}) {
+  const { isAuthenticated, initialized } = useAuth();
+
+  if (!initialized) {
+    // auth not ready — wait
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem(REDIRECT_KEY, `/${portalKey}`);
+        console.info("[ProtectedRoute] saved redirect", `/${portalKey}`);
+      } catch (e) {
+        console.warn("[ProtectedRoute] failed to save redirect", e);
+      }
+      window.location.replace("/login");
+    }
+    return null;
+  }
+
+  const selected = getPortalSelected();
+  if (selected !== portalKey) {
+    if (typeof window !== "undefined") {
+      console.info("[ProtectedRoute] portalSelected mismatch -> sending home", { selected, expected: portalKey });
+      window.location.replace("/");
+    }
+    return null;
+  }
+
+  return <>{children}</>;
+}
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
-      <Route path="/student" component={StudentPortal} />
-      <Route path="/company" component={CompanyPortal} />
-      <Route path="/admin" component={AdminPortal} />
+
+      <Route path="/student">
+        <ProtectedRoute portalKey="student">
+          <StudentPortal />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/company">
+        <ProtectedRoute portalKey="company">
+          <CompanyPortal />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/admin">
+        <ProtectedRoute portalKey="admin">
+          <AdminPortal />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/login" component={LoginPage} />
+
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-function App() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <Toaster />
+            {/* SelectedCandidatesProvider wraps the router so all pages (CompanyPortal, Onboarding, etc.)
+                can access the shared selected-candidates context. */}
+            <SelectedCandidatesProvider>
+              <Router />
+            </SelectedCandidatesProvider>
+          </TooltipProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
-
-export default App;

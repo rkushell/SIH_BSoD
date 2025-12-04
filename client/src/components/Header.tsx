@@ -1,36 +1,65 @@
+// client/src/components/Header.tsx
+
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X, GraduationCap, Building2, Shield, Home } from "lucide-react";
+import { Image, Smartphone, Headphones } from "lucide-react";
 
 interface HeaderProps {
   showNav?: boolean;
 }
 
 export function Header({ showNav = true }: HeaderProps) {
-  const [language, setLanguage] = useState("en");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [location] = useLocation();
 
+  // track currently selected portal
+  const [portalSelected, setPortalSelected] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      setPortalSelected(sessionStorage.getItem("portalSelected"));
+    } catch {
+      setPortalSelected(null);
+    }
+
+    function onStorage(e: StorageEvent) {
+      if (e.key === "portalSelected") {
+        try {
+          setPortalSelected(sessionStorage.getItem("portalSelected"));
+        } catch {
+          setPortalSelected(null);
+        }
+      }
+    }
+
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   const navItems = [
-    { href: "/", label: "Home", icon: Home },
-    { href: "/student", label: "Student Portal", icon: GraduationCap },
-    { href: "/company", label: "Company Portal", icon: Building2 },
-    { href: "/admin", label: "Admin Portal", icon: Shield },
+    { label: "Home", icon: Home, action: () => setLocation("/") },
+    { label: "Gallery", icon: Image, action: () => {} },
+    { label: "Mobile App", icon: Smartphone, action: () => {} },
+    { label: "Support", icon: Headphones, action: () => {} },
   ];
+
+  function openStudentProfile() {
+    try {
+      sessionStorage.setItem("portalSelected", "student");
+      sessionStorage.setItem("forceProfileOpen", "1");
+    } catch {}
+    window.location.href = "/student";
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between gap-4">
+          
+          {/* Logo */}
           <Link href="/" className="flex items-center gap-3" data-testid="link-home">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
               <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor">
@@ -44,34 +73,50 @@ export function Header({ showNav = true }: HeaderProps) {
             </div>
           </Link>
 
+          {/* Desktop Navigation */}
           {showNav && (
             <nav className="hidden md:flex items-center gap-1">
-              {navItems.map((item) => (
-                <Link key={item.href} href={item.href}>
+
+              {portalSelected ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600 capitalize">
+                    {portalSelected} portal
+                  </span>
+
+                  {portalSelected === "student" && (
+                    <Button
+                      onClick={openStudentProfile}
+                      variant="outline"
+                      size="sm"
+                      className="ml-2"
+                      data-testid="header-set-profile"
+                    >
+                      Set Profile
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                navItems.map((item) => (
                   <Button
-                    variant={location === item.href ? "secondary" : "ghost"}
+                    key={item.label}
+                    variant={item.label === "Home" && location === "/" ? "secondary" : "ghost"}
                     size="sm"
                     className="gap-2"
+                    onClick={item.action}
                     data-testid={`nav-${item.label.toLowerCase().replace(" ", "-")}`}
                   >
                     <item.icon className="h-4 w-4" />
                     {item.label}
                   </Button>
-                </Link>
-              ))}
+                ))
+              )}
+
             </nav>
           )}
 
+          {/* Theme / Mobile Menu */}
           <div className="flex items-center gap-2">
-            <Select value={language} onValueChange={setLanguage}>
-              <SelectTrigger className="w-24" data-testid="select-language">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="hi">हिंदी</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Language selector removed */}
 
             <ThemeToggle />
 
@@ -89,23 +134,50 @@ export function Header({ showNav = true }: HeaderProps) {
           </div>
         </div>
 
+        {/* Mobile Navigation */}
         {mobileMenuOpen && showNav && (
           <nav className="md:hidden pb-4 flex flex-col gap-1">
-            {navItems.map((item) => (
-              <Link key={item.href} href={item.href}>
+
+            {portalSelected ? (
+              <div className="flex flex-col gap-2 px-2">
+
+                <span className="text-sm text-gray-600 capitalize">
+                  {portalSelected} portal
+                </span>
+
+                {portalSelected === "student" && (
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openStudentProfile();
+                    }}
+                  >
+                    Set Profile
+                  </Button>
+                )}
+              </div>
+            ) : (
+              navItems.map((item) => (
                 <Button
-                  variant={location === item.href ? "secondary" : "ghost"}
+                  key={item.label}
+                  variant={item.label === "Home" && location === "/" ? "secondary" : "ghost"}
                   className="w-full justify-start gap-2"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    item.action();
+                    setMobileMenuOpen(false);
+                  }}
                   data-testid={`mobile-nav-${item.label.toLowerCase().replace(" ", "-")}`}
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
                 </Button>
-              </Link>
-            ))}
+              ))
+            )}
+
           </nav>
         )}
+
       </div>
     </header>
   );
