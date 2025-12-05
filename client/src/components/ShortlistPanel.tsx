@@ -27,6 +27,9 @@ const PREFERENCE_TITLES = [
   "Preference-1 Candidates",
   "Preference-2 Candidates",
   "Preference-3 Candidates",
+  "Preference-4 Candidates",
+  "Preference-5 Candidates",
+  "Preference-6 Candidates",
 ];
 
 export function ShortlistPanel() {
@@ -48,7 +51,10 @@ export function ShortlistPanel() {
         [
           { id: 4, name: "Ishita Singh", email: "ishita@email.com", phone: "+91 98765 43213", matchScore: 85, skills: ["Python", "TensorFlow", "Data Analysis"], experience: "Fresher" },
         ],
-        [],
+        [], // pref-3
+        [], // pref-4
+        [], // pref-5
+        [], // pref-6
       ];
       const newRounds = [...rounds];
       newRounds[0] = { ...newRounds[0], preferences: initialRound1Prefs };
@@ -58,7 +64,7 @@ export function ShortlistPanel() {
   }
 
   const updatePreferenceList = (roundIndex: number, prefIndex: number, newList: CandidateType[]) => {
-    const copy = rounds.map(r => ({ preferences: r.preferences.map(p => [...p]), selected: [...r.selected] }));
+    const copy = rounds.map(r => ({ ...r, preferences: r.preferences.map(p => [...p]), selected: [...r.selected] }));
     copy[roundIndex].preferences[prefIndex] = newList;
     setRounds(copy);
   };
@@ -189,28 +195,113 @@ export function ShortlistPanel() {
   };
 
   const PreferenceColumn = ({ roundIndex, prefIndex }: { roundIndex: number; prefIndex: number; }) => {
-    const list = rounds[roundIndex]?.preferences[prefIndex] || [];
+    const list = rounds[roundIndex]?.preferences?.[prefIndex] || [];
     const sorted = [...list].sort((a, b) => b.matchScore - a.matchScore);
+    const [expanded, setExpanded] = useState(true);
 
     return (
-      <div className="flex-1 min-w-[300px]">
-        <h3 className="font-semibold mb-3 flex items-center gap-2">
-          {PREFERENCE_TITLES[prefIndex]}
-          <Badge variant="outline">{sorted.length}</Badge>
-        </h3>
-        <div className="bg-muted/10 rounded-lg p-2 min-h-[200px]">
-          <Reorder.Group values={sorted} onReorder={(newOrder) => {
-            const original = rounds[roundIndex].preferences[prefIndex];
-            const reordered = newOrder.map((n) => original.find(o => o.id === n.id)!).filter(Boolean);
-            updatePreferenceList(roundIndex, prefIndex, reordered);
-          }} className="space-y-3">
-            {sorted.map(candidate => (
-              <Reorder.Item key={candidate.id} value={candidate}>
-                <CandidateCard candidate={candidate} roundIndex={roundIndex} prefIndex={prefIndex} onReject={() => removeCandidateCompletely(candidate.id)} />
-              </Reorder.Item>
-            ))}
-          </Reorder.Group>
-          {sorted.length === 0 && <p className="text-center text-muted-foreground py-8 text-sm">No candidates in this list</p>}
+      <div className="w-full">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-semibold flex items-center gap-2">
+            {PREFERENCE_TITLES[prefIndex]}
+            <Badge variant="outline">{sorted.length}</Badge>
+          </h3>
+          <Button variant="ghost" size="sm" onClick={() => setExpanded(x => !x)} className="h-8">
+            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </div>
+
+        <div className="bg-muted/10 rounded-lg p-2 min-h-[160px]">
+          {!expanded && (
+            <div className="py-8 text-center text-muted-foreground text-sm">Collapsed. Click the arrow to expand into a table view.</div>
+          )}
+
+          {expanded && (
+            <>
+              {sorted.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8 text-sm">No candidates in this list</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left">
+                        <th className="py-2 pr-4">Candidate</th>
+                        <th className="py-2 pr-4">Contact</th>
+                        <th className="py-2 pr-4">Skills / Experience</th>
+                        <th className="py-2 pr-4">Match</th>
+                        <th className="py-2 pr-0 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {sorted.map(c => {
+                        const resume = resumes[c.id];
+                        const inputId = `resume-input-table-${roundIndex}-${prefIndex}-${c.id}`;
+                        const isSelected = rounds[roundIndex]?.selected?.some(s => s.candidate.id === c.id);
+                        return (
+                          <tr key={c.id}>
+                            <td className="py-3 pr-4 align-top">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <Avatar className="h-8 w-8"><AvatarFallback>{c.name.split(" ").map(n => n[0]).join("")}</AvatarFallback></Avatar>
+                                <div className="min-w-0">
+                                  <div className="font-medium truncate">{c.name}</div>
+                                  <div className="text-xs text-muted-foreground truncate">{c.email}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3 pr-4 align-top">
+                              <div className="text-xs text-muted-foreground">{c.phone || "N/A"}</div>
+                            </td>
+                            <td className="py-3 pr-4 align-top">
+                              <div className="flex flex-wrap gap-1 mb-1">
+                                {c.skills?.map(s => <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>)}
+                              </div>
+                              <div className="text-xs text-muted-foreground">{c.experience || "N/A"}</div>
+                            </td>
+                            <td className="py-3 pr-4 align-top">
+                              <div className="flex items-center gap-2">
+                                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                                <span className="font-semibold text-sm">{c.matchScore}%</span>
+                              </div>
+                            </td>
+                            <td className="py-3 pr-0 align-top text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <input id={inputId} type="file" accept=".pdf,.doc,.docx" className="hidden"
+                                  onChange={(e) => {
+                                    const f = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+                                    handleUpload(c.id, f);
+                                  }} />
+                                <label htmlFor={inputId}>
+                                  <Button variant="outline" size="sm" asChild className="h-8">
+                                    <span className="cursor-pointer flex items-center gap-1"><FileText className="h-3 w-3" /> {resume ? "Update" : "Upload"}</span>
+                                  </Button>
+                                </label>
+                                {resume && (
+                                  <Button variant="ghost" size="sm" onClick={() => viewResume(c.id)} className="h-8">
+                                    <Eye className="h-3 w-3 mr-1" /> View
+                                  </Button>
+                                )}
+                                <Button size="sm" variant="destructive" onClick={() => removeCandidateCompletely(c.id)} className="h-8">
+                                  <XCircle className="h-3 w-3 mr-1" /> Remove
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className={`h-8 ${isSelected ? "bg-green-600 hover:bg-green-700" : "bg-green-500 hover:bg-green-600"}`}
+                                  onClick={() => addToSelected(roundIndex, prefIndex, c)}
+                                  disabled={isSelected}
+                                >
+                                  <CheckCircle className="h-3 w-3 mr-1" /> {isSelected ? "Selected" : "Select"}
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     );
@@ -236,27 +327,36 @@ export function ShortlistPanel() {
                 <p className="text-xs mt-1">Click "Select" on a candidate to add them here.</p>
               </div>
             )}
-            {allSelected.map((s, idx) => (
-              <div key={`${s.candidate.id}-${idx}`} className="p-3 bg-background border rounded-lg shadow-sm">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8"><AvatarFallback>{s.candidate.name.split(" ").map(n => n[0]).join("")}</AvatarFallback></Avatar>
-                    <div className="min-w-0">
-                      <div className="font-medium text-sm truncate">{s.candidate.name}</div>
-                      <div className="text-xs text-muted-foreground">Round {s.roundIndex + 1}</div>
+            {allSelected.map((s, idx) => {
+              // support multiple possible keys for stored preference index
+              const prefIndex = (s.prefIndex ?? s.preferenceIndex ?? s.preference ?? s.pref ?? null);
+              return (
+                <div key={`${s.candidate.id}-${idx}`} className="p-3 bg-background border rounded-lg shadow-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-8 w-8"><AvatarFallback>{s.candidate.name.split(" ").map(n => n[0]).join("")}</AvatarFallback></Avatar>
+                      <div className="min-w-0">
+                        <div className="font-medium text-sm truncate">{s.candidate.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Round {s.roundIndex + 1}
+                          {prefIndex !== null && prefIndex !== undefined && (
+                            <> · Pref {prefIndex + 1}</>
+                          )}
+                        </div>
+                      </div>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => removeFromSelected(s.roundIndex, s.candidate.id)}
+                    >
+                      <XCircle className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => removeFromSelected(s.roundIndex, s.candidate.id)}
-                  >
-                    <XCircle className="h-4 w-4" />
-                  </Button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </CardContent>
         </ScrollArea>
       </Card>
@@ -284,24 +384,18 @@ export function ShortlistPanel() {
           <ScrollArea className="flex-1">
             <div className="p-6">
               <TabsContent value="round1" className="m-0 mt-0">
-                <div className="flex gap-6 overflow-x-auto pb-4">
-                  <PreferenceColumn roundIndex={0} prefIndex={0} />
-                  <PreferenceColumn roundIndex={0} prefIndex={1} />
-                  <PreferenceColumn roundIndex={0} prefIndex={2} />
+                <div className="flex flex-col gap-6 max-h-[calc(100vh-360px)] overflow-y-auto pb-4">
+                  {Array.from({ length: 6 }).map((_, i) => <PreferenceColumn key={i} roundIndex={0} prefIndex={i} />)}
                 </div>
               </TabsContent>
               <TabsContent value="round2" className="m-0 mt-0">
-                <div className="flex gap-6 overflow-x-auto pb-4">
-                  <PreferenceColumn roundIndex={1} prefIndex={0} />
-                  <PreferenceColumn roundIndex={1} prefIndex={1} />
-                  <PreferenceColumn roundIndex={1} prefIndex={2} />
+                <div className="flex flex-col gap-6 max-h-[calc(100vh-360px)] overflow-y-auto pb-4">
+                  {Array.from({ length: 6 }).map((_, i) => <PreferenceColumn key={i} roundIndex={1} prefIndex={i} />)}
                 </div>
               </TabsContent>
               <TabsContent value="round3" className="m-0 mt-0">
-                <div className="flex gap-6 overflow-x-auto pb-4">
-                  <PreferenceColumn roundIndex={2} prefIndex={0} />
-                  <PreferenceColumn roundIndex={2} prefIndex={1} />
-                  <PreferenceColumn roundIndex={2} prefIndex={2} />
+                <div className="flex flex-col gap-6 max-h-[calc(100vh-360px)] overflow-y-auto pb-4">
+                  {Array.from({ length: 6 }).map((_, i) => <PreferenceColumn key={i} roundIndex={2} prefIndex={i} />)}
                 </div>
               </TabsContent>
             </div>

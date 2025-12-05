@@ -1,7 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { X } from "lucide-react";
 // EKycSection.tsx is rendered unchanged — we only added a tiny helper to it (notifyEkycCompleted).
 import EKycApp from "./EKycSection";
+
+const SKILLS = [
+  "python", "sql", "ml", "cloud", "frontend", "backend", "networking", "java", "excel", "analysis", "presentation", "communication", "financial_modeling", "design", "manufacturing", "pcb_design", "autocad", "cad_modelling", "surveying", "construction_management", "writing", "seo", "social_media"
+];
 
 export default function RegistrationWithAadhar({ onComplete }: { onComplete: () => void }) {
   // steps: 1=contact, 2=ekyc, 3=personal details, 4=education & income
@@ -23,12 +29,12 @@ export default function RegistrationWithAadhar({ onComplete }: { onComplete: () 
 
   // STEP 4 — education & income
   const [highestQualification, setHighestQualification] = useState<
-    "High School" | "Undergraduate" | "Postgraduate" | "Diploma" | ""
+    "Grade 10" | "Grade 12" | "Undergraduate" | "ITI" | "Diploma" | ""
   >("");
   const [marksGPA, setMarksGPA] = useState("");
   const [familyIncome, setFamilyIncome] = useState("");
   const [itrFile, setItrFile] = useState<File | null>(null);
-  const [skills, setSkills] = useState("");
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [certifications, setCertifications] = useState("");
   const [latestEducationInstitution, setLatestEducationInstitution] = useState("");
 
@@ -44,6 +50,18 @@ export default function RegistrationWithAadhar({ onComplete }: { onComplete: () 
       sessionStorage.setItem(key, value);
     } catch {}
   }
+
+  const addSkill = (skill: string) => {
+    if (selectedSkills.length < 6 && !selectedSkills.includes(skill)) {
+      setSelectedSkills([...selectedSkills, skill]);
+    }
+  };
+
+  const removeSkill = (skill: string) => {
+    setSelectedSkills(selectedSkills.filter(s => s !== skill));
+  };
+
+  const availableSkills = SKILLS.filter(skill => !selectedSkills.includes(skill));
 
   /* ---------------- STEP 1 ---------------- */
   function submitStep1(e?: React.FormEvent) {
@@ -109,6 +127,9 @@ export default function RegistrationWithAadhar({ onComplete }: { onComplete: () 
     if (!latestEducationInstitution.trim())
       return alert("Enter latest education institution.");
 
+    if (selectedSkills.length === 0)
+      return alert("Select at least one skill.");
+
     let base: any = {};
     try {
       base = JSON.parse(sessionStorage.getItem("studentProfile_partial") || "{}");
@@ -121,7 +142,7 @@ export default function RegistrationWithAadhar({ onComplete }: { onComplete: () 
       familyIncome: Number(familyIncome),
       itrProvided: !!itrFile,
       itrFileName: itrFile?.name ?? null,
-      skills: skills.split(",").map((v) => v.trim()).filter(Boolean),
+      skills: selectedSkills,
       certifications: certifications.split(",").map((v) => v.trim()).filter(Boolean),
       latestEducationInstitution: latestEducationInstitution.trim(),
       completedAt: new Date().toISOString(),
@@ -567,9 +588,10 @@ export default function RegistrationWithAadhar({ onComplete }: { onComplete: () 
                 onChange={(e) => setHighestQualification(e.target.value as any)}
               >
                 <option value="">Select</option>
-                <option value="High School">High School</option>
+                <option value="Grade 10">Grade 10</option>
+                <option value="Grade 12">Grade 12</option>
                 <option value="Undergraduate">Undergraduate</option>
-                <option value="Postgraduate">Postgraduate</option>
+                <option value="ITI">ITI</option>
                 <option value="Diploma">Diploma</option>
               </select>
             </div>
@@ -629,12 +651,44 @@ export default function RegistrationWithAadhar({ onComplete }: { onComplete: () 
             </div>
 
             <div>
-              <label className="block text-sm mb-1">Skills (comma separated)</label>
-              <input
+              <label className="block text-sm mb-1">Skills (select up to 6)</label>
+              <select
                 className="w-full px-3 py-2 border rounded"
-                value={skills}
-                onChange={(e) => setSkills(e.target.value)}
-              />
+                onChange={(e) => addSkill(e.target.value)}
+                disabled={selectedSkills.length >= 6}
+                value=""
+              >
+                <option value="">
+                  {selectedSkills.length >= 6 ? "Maximum 6 skills selected" : "Select a skill"}
+                </option>
+                {availableSkills.map((skill) => (
+                  <option key={skill} value={skill}>
+                    {skill}
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex flex-wrap gap-2 mt-3 p-3 bg-slate-50 rounded min-h-[60px]">
+                {selectedSkills.length === 0 ? (
+                  <p className="text-sm text-gray-500">Select skills from the dropdown above</p>
+                ) : (
+                  selectedSkills.map((skill) => (
+                    <Badge key={skill} variant="secondary" className="gap-1">
+                      {skill}
+                      <button
+                        type="button"
+                        onClick={() => removeSkill(skill)}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Selected: {selectedSkills.length}/6
+              </p>
             </div>
 
             <div>

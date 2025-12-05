@@ -1,4 +1,3 @@
-// client/src/pages/AdminPortal.tsx
 import React, { useState } from 'react';
 import { useAuth } from "@/lib/AuthProvider";
 import { Header } from "@/components/Header";
@@ -23,6 +22,7 @@ import {
     FileText,
     Check,
     X,
+    Upload,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
+// Modal Dialog Component
+const Dialog = ({ open, onOpenChange, children }: any) => {
+    if (!open) return null;
+    return (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+            <div className="bg-background rounded-lg shadow-lg max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+                {children}
+            </div>
+        </div>
+    );
+};
 
 // --------------------------------------------------------------------------------
 // --- DASHBOARD COMPONENTS ---
@@ -50,6 +62,69 @@ const StatCard = ({ title, value, change, icon: Icon, trend }: { title: string, 
         </CardContent>
     </Card>
 );
+
+const CSVUploadBox = ({ title, description, onFileSelect }: { title: string, description: string, onFileSelect: (file: File) => void }) => {
+    const [isDragging, setIsDragging] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = () => {
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].name.endsWith('.csv')) {
+            setSelectedFile(files[0]);
+            onFileSelect(files[0]);
+        }
+    };
+
+    const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.currentTarget.files;
+        if (files && files.length > 0) {
+            setSelectedFile(files[0]);
+            onFileSelect(files[0]);
+        }
+    };
+
+    return (
+        <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className={`p-8 border-2 border-dashed rounded-lg cursor-pointer transition-all ${
+                isDragging
+                    ? 'border-primary bg-primary/10 scale-105'
+                    : 'border-muted-foreground/30 bg-muted/5 hover:bg-muted/10'
+            }`}
+        >
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleFileInput}
+                className="hidden"
+            />
+            <div className="flex flex-col items-center justify-center gap-3">
+                <Upload className="h-8 w-8 text-muted-foreground" />
+                <div className="text-center">
+                    <p className="font-semibold text-sm">{title}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{description}</p>
+                    {selectedFile && <p className="text-xs text-green-600 dark:text-green-400 mt-2 font-medium">✓ {selectedFile.name}</p>}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const CategoryMiniTable = () => {
     const data = [
@@ -98,75 +173,189 @@ const CategoryMiniTable = () => {
     );
 };
 
+const TrainingDataModal = ({ open, onOpenChange, onFilesSelected }: { open: boolean, onOpenChange: (open: boolean) => void, onFilesSelected: (internship: File, candidate: File) => void }) => {
+    const [internshipFile, setInternshipFile] = useState<File | null>(null);
+    const [candidateFile, setCandidateFile] = useState<File | null>(null);
 
-const AdminDashboard = ({ isAllocating, startAllocation, generateResults }: any) => (
-    <div className="space-y-6">
-        {/* KPI Header */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard
-                title="Total Applicants"
-                value="11,150"
-                change="Current Round"
-                icon={Users}
-                trend="neutral"
-            />
-            <StatCard
-                title="Total Placed"
-                value="6,500"
-                change="Seats filled so far"
-                icon={TrendingUp}
-                trend="up"
-            />
-            <StatCard
-                title="Placement Rate"
-                value="58.3%"
-                change="Target: 60.0%"
-                icon={Percent}
-                trend="down"
-            />
-        </div>
+    const handleProceed = () => {
+        if (internshipFile && candidateFile) {
+            onFilesSelected(internshipFile, candidateFile);
+            onOpenChange(false);
+            setInternshipFile(null);
+            setCandidateFile(null);
+        }
+    };
 
-        {/* Operational Controls */}
-        <Card className="border-primary/20 bg-primary/5">
-            <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2"><Settings className="h-5 w-5" /> Allocation Controls</CardTitle>
-                <CardDescription>Manage the automated allocation process and generate reports.</CardDescription>
+    const handleClose = () => {
+        onOpenChange(false);
+        setInternshipFile(null);
+        setCandidateFile(null);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <CardHeader className="border-b">
+                <CardTitle>Upload Training Data</CardTitle>
+                <CardDescription>Upload CSV files to train the allocation model before proceeding.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row gap-4">
-                <Button
-                    onClick={startAllocation}
-                    disabled={isAllocating}
-                    size="lg"
-                    className="flex-1 gap-2"
-                >
-                    {isAllocating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-5 w-5" />}
-                    {isAllocating ? "Allocation In Progress..." : "Start Model Allocation"}
-                </Button>
-                <Button
-                    onClick={generateResults}
-                    disabled={isAllocating}
-                    variant="secondary"
-                    size="lg"
-                    className="flex-1 gap-2"
-                >
-                    <FileText className="h-5 w-5" />
-                    Generate Meeting Results PDF
-                </Button>
+            <CardContent className="space-y-6 pt-6">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Internship Training Data</label>
+                    <CSVUploadBox
+                        title="Internship Dataset"
+                        description="Drag & drop or click to upload CSV"
+                        onFileSelect={setInternshipFile}
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Candidate Training Data</label>
+                    <CSVUploadBox
+                        title="Candidate Dataset"
+                        description="Drag & drop or click to upload CSV"
+                        onFileSelect={setCandidateFile}
+                    />
+                </div>
+
+                {(internshipFile || candidateFile) && (
+                    <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <p className="text-sm text-green-700 dark:text-green-400">
+                            {internshipFile && <span className="block">✓ Internship file: {internshipFile.name}</span>}
+                            {candidateFile && <span className="block">✓ Candidate file: {candidateFile.name}</span>}
+                        </p>
+                    </div>
+                )}
+
+                <div className="flex gap-3 justify-end pt-4">
+                    <Button variant="outline" onClick={handleClose}>
+                        Cancel
+                    </Button>
+                    <Button 
+                        onClick={handleProceed}
+                        disabled={!internshipFile || !candidateFile}
+                    >
+                        Proceed with Allocation
+                    </Button>
+                </div>
             </CardContent>
-        </Card>
+        </Dialog>
+    );
+};
 
-        {/* Mini-Table Section */}
-        <CategoryMiniTable />
+const AdminDashboard = ({ isAllocating, startAllocation, generateResults }: any) => {
+    const [showTrainingModal, setShowTrainingModal] = useState(false);
+    const [uploadedFiles, setUploadedFiles] = useState<{ internship: File | null, candidate: File | null }>({ internship: null, candidate: null });
 
-        <div className="h-48 flex items-center justify-center text-muted-foreground border border-dashed rounded-xl bg-muted/10">
-            Simulation Visualization Placeholder: Comparative placement rates (Model vs. Previous Year).
+    const handleStartAllocationClick = () => {
+        setShowTrainingModal(true);
+    };
+
+    const handleFilesSelected = (internship: File, candidate: File) => {
+        setUploadedFiles({ internship, candidate });
+        startAllocation();
+    };
+
+    return (
+        <div className="space-y-6">
+            {/* KPI Header */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <StatCard
+                    title="Total Applicants"
+                    value="11,150"
+                    change="Current Round"
+                    icon={Users}
+                    trend="neutral"
+                />
+                <StatCard
+                    title="Total Placed"
+                    value="6,500"
+                    change="Seats filled so far"
+                    icon={TrendingUp}
+                    trend="up"
+                />
+                <StatCard
+                    title="Placement Rate"
+                    value="58.3%"
+                    change="Target: 60.0%"
+                    icon={Percent}
+                    trend="down"
+                />
+            </div>
+
+            {/* Training Data Display Section - Only shows if files are uploaded */}
+            {(uploadedFiles.internship || uploadedFiles.candidate) && (
+                <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10">
+                    <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2 text-green-700 dark:text-green-400">
+                            <Check className="h-5 w-5" /> Training Data Uploaded
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {uploadedFiles.internship && (
+                                <div className="p-4 bg-white dark:bg-slate-950 rounded-lg border border-green-200 dark:border-green-800">
+                                    <p className="text-sm font-medium text-muted-foreground">Internship Data</p>
+                                    <p className="text-sm font-semibold text-foreground mt-1">{uploadedFiles.internship.name}</p>
+                                </div>
+                            )}
+                            {uploadedFiles.candidate && (
+                                <div className="p-4 bg-white dark:bg-slate-950 rounded-lg border border-green-200 dark:border-green-800">
+                                    <p className="text-sm font-medium text-muted-foreground">Candidate Data</p>
+                                    <p className="text-sm font-semibold text-foreground mt-1">{uploadedFiles.candidate.name}</p>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Operational Controls */}
+            <Card className="border-primary/20 bg-primary/5">
+                <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2"><Settings className="h-5 w-5" /> Allocation Controls</CardTitle>
+                    <CardDescription>Manage the automated allocation process and generate reports.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col sm:flex-row gap-4">
+                    <Button
+                        onClick={handleStartAllocationClick}
+                        disabled={isAllocating}
+                        size="lg"
+                        className="flex-1 gap-2"
+                    >
+                        {isAllocating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-5 w-5" />}
+                        {isAllocating ? "Allocation In Progress..." : "Start Model Allocation"}
+                    </Button>
+                    <Button
+                        onClick={generateResults}
+                        disabled={isAllocating}
+                        variant="secondary"
+                        size="lg"
+                        className="flex-1 gap-2"
+                    >
+                        <FileText className="h-5 w-5" />
+                        Generate Meeting Results PDF
+                    </Button>
+                </CardContent>
+            </Card>
+
+            {/* Mini-Table Section */}
+            <CategoryMiniTable />
+
+            <div className="h-48 flex items-center justify-center text-muted-foreground border border-dashed rounded-xl bg-muted/10">
+                Simulation Visualization Placeholder: Comparative placement rates (Model vs. Previous Year).
+            </div>
+
+            {/* Training Data Modal */}
+            <TrainingDataModal 
+                open={showTrainingModal}
+                onOpenChange={setShowTrainingModal}
+                onFilesSelected={handleFilesSelected}
+            />
         </div>
-    </div>
-);
+    );
+};
 
-// --------------------------------------------------------------------------------
-// --- NEW TAB COMPONENTS ---
-// --------------------------------------------------------------------------------
+// ...existing code...
 
 const FairnessMetricsPanel = () => (
     <Card>
@@ -239,7 +428,6 @@ const RoundLogsPanel = () => (
 );
 
 const PerStudentTablePanel = () => {
-    // Expanded mock data with round status
     const allStudents = [
         { id: 'A001', name: 'Rohan V.', category: 'GEN', score: 92.5, company: 'Tech Corp', placed: true, boost: false, social: { rural: 'No', gender: 'M' }, roundStatus: { 1: true, 2: false } },
         { id: 'A002', name: 'Priya K.', category: 'OBC', score: 88.1, company: 'Finance Ltd', placed: true, boost: true, social: { rural: 'Yes', gender: 'F' }, roundStatus: { 1: false, 2: true } },
@@ -279,7 +467,6 @@ const PerStudentTablePanel = () => {
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-6">
-                    {/* Student Table */}
                     <div className="md:w-2/3 border rounded-lg overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left">
@@ -323,7 +510,6 @@ const PerStudentTablePanel = () => {
                         </div>
                     </div>
 
-                    {/* Detail Panel */}
                     <Card className="md:w-1/3 bg-muted/10 border-0 shadow-none">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-base">Student Detail Panel</CardTitle>
@@ -481,11 +667,6 @@ const AuditTrailPanel = () => (
     </Card>
 );
 
-
-// --------------------------------------------------------------------------------
-// --- MAIN APP COMPONENT ---
-// --------------------------------------------------------------------------------
-
 const tabData = [
     { value: "dashboard", icon: LayoutDashboard, label: "Dashboard", testId: "tab-admin-dashboard", component: (props: any) => <AdminDashboard {...props} /> },
     { value: "fairness", icon: Scale, label: "Fairness", testId: "tab-fairness", component: () => <FairnessMetricsPanel /> },
@@ -504,7 +685,6 @@ export default function AdminPortal() {
     const startAllocation = () => {
         setIsAllocating(true);
         console.log("Starting Model Allocation...");
-        // Mock 5 second allocation process
         setTimeout(() => {
             setIsAllocating(false);
             console.log("Model Allocation Complete. New results available.");
@@ -513,7 +693,6 @@ export default function AdminPortal() {
 
     const generateResults = () => {
         console.log("Generating Final Meeting Results PDF...");
-        // Mock PDF generation process
         alert("Final Allocation Results PDF Generation Initiated. Check Reports & Exports.");
     };
 

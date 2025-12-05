@@ -37,9 +37,12 @@ interface ProfileData {
 
 const STEPS = ["Personal Info", "Education", "Skills", "Preferences"];
 
+const SKILLS = [
+  "python", "sql", "ml", "cloud", "frontend", "backend", "networking", "java", "excel", "analysis", "presentation", "communication", "financial_modeling", "design", "manufacturing", "pcb_design", "autocad", "cad_modelling", "surveying", "construction_management", "writing", "seo", "social_media"
+];
+
 export function ProfileSetup({ onComplete }: ProfileSetupProps) {
   const [step, setStep] = useState(0);
-  const [skillInput, setSkillInput] = useState("");
   const [formData, setFormData] = useState<ProfileData>({
     name: "",
     email: "",
@@ -57,13 +60,12 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
 
   const progress = ((step + 1) / STEPS.length) * 100;
 
-  const addSkill = () => {
-    if (skillInput.trim() && !formData.skills.includes(skillInput.trim())) {
+  const addSkill = (skill: string) => {
+    if (formData.skills.length < 6 && !formData.skills.includes(skill)) {
       setFormData(prev => ({
         ...prev,
-        skills: [...prev.skills, skillInput.trim()]
+        skills: [...prev.skills, skill]
       }));
-      setSkillInput("");
     }
   };
 
@@ -78,6 +80,8 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
     console.log("Profile data:", formData);
     onComplete?.(formData);
   };
+
+  const availableSkills = SKILLS.filter(skill => !formData.skills.includes(skill));
 
   return (
     <Card className="w-full max-w-2xl mx-auto" data-testid="profile-setup">
@@ -156,10 +160,11 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                       <SelectValue placeholder="Select your qualification" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="12th">12th Pass</SelectItem>
-                      <SelectItem value="diploma">Diploma</SelectItem>
-                      <SelectItem value="graduate">Graduate</SelectItem>
-                      <SelectItem value="postgraduate">Post Graduate</SelectItem>
+                      <SelectItem value="Grade 10">Grade 10</SelectItem>
+                      <SelectItem value="Grade 12">Grade 12</SelectItem>
+                      <SelectItem value="Undergraduate">Undergraduate</SelectItem>
+                      <SelectItem value="ITI">ITI</SelectItem>
+                      <SelectItem value="Diploma">Diploma</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -198,21 +203,26 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
             {step === 2 && (
               <>
                 <div className="space-y-2">
-                  <Label>Add Skills</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={skillInput}
-                      onChange={(e) => setSkillInput(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addSkill())}
-                      placeholder="e.g., Python, Data Analysis"
-                      data-testid="input-skill"
-                    />
-                    <Button onClick={addSkill} data-testid="button-add-skill">Add</Button>
-                  </div>
+                  <Label>Select Skills</Label>
+                  <Select
+                    onValueChange={(value) => addSkill(value)}
+                    disabled={formData.skills.length >= 6}
+                  >
+                    <SelectTrigger data-testid="select-skills">
+                      <SelectValue placeholder={formData.skills.length >= 6 ? "Maximum 6 skills selected" : "Select a skill"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableSkills.map((skill) => (
+                        <SelectItem key={skill} value={skill}>
+                          {skill}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex flex-wrap gap-2 min-h-[100px] p-4 bg-muted/50 rounded-lg">
                   {formData.skills.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Add your skills above</p>
+                    <p className="text-sm text-muted-foreground">Select your skills above</p>
                   ) : (
                     formData.skills.map((skill) => (
                       <Badge key={skill} variant="secondary" className="gap-1" data-testid={`badge-skill-${skill}`}>
@@ -225,7 +235,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Add at least 3 skills to help us match you better
+                  You can select up to 6 skills. Selected: {formData.skills.length}/6
                 </p>
               </>
             )}
@@ -329,3 +339,4 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
     </Card>
   );
 }
+

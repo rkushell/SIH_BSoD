@@ -1,10 +1,9 @@
-// Updated StudentPortal.tsx — Added Offered tab: internships offered to the user with Accept / Reject actions
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import LogoutButton from "@/components/LogoutButton";
-import { useAuth } from "@/lib/AuthProvider"; // Import useAuth
-import { AuthGate } from "@/components/AuthGate"; // using the project's AuthGate for mock auth
+import { useAuth } from "@/lib/AuthProvider";
+import { AuthGate } from "@/components/AuthGate";
 import RegistrationWithAadhar from "@/components/RegistrationWithAadhar";
 import { ApplicationTracker } from "@/components/ApplicationTracker";
 import EligibilityChecker from "@/components/EligibilityChecker";
@@ -16,7 +15,6 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/components/ui/tabs";
-
 import {
   Dialog,
   DialogContent,
@@ -32,6 +30,8 @@ import {
   Send,
   Filter,
   Sparkles,
+  Star,
+  X,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -162,14 +162,232 @@ const SAMPLE_INTERNSHIPS = [
   },
 ];
 
+/* --- FeedbackDialog Component --- */
+function FeedbackDialog() {
+  const [open, setOpen] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [feedback, setFeedback] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = () => {
+    if (rating === 0) {
+      alert("Please select a rating");
+      return;
+    }
+    console.log("Feedback submitted:", { rating, feedback });
+    setSubmitted(true);
+    setTimeout(() => {
+      setOpen(false);
+      setSubmitted(false);
+      setRating(0);
+      setFeedback("");
+    }, 2000);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <MessageSquare className="h-4 w-4 mr-2" />
+          Feedback
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Send us your Feedback</DialogTitle>
+        </DialogHeader>
+
+        {submitted ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center justify-center py-8"
+          >
+            <div className="rounded-full bg-green-100 p-3 mb-4">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-green-600">Feedback Successfully Submitted!</h3>
+            <p className="text-sm text-muted-foreground mt-2">Thank you for your valuable feedback.</p>
+          </motion.div>
+        ) : (
+          <div className="space-y-4 py-4">
+            {/* Rating Bar */}
+            <div>
+              <label className="block text-sm font-medium mb-3">Rate your experience</label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setRating(star)}
+                    className="transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`h-8 w-8 ${
+                        star <= rating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Feedback Text */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Your Feedback</label>
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="Tell us what you think about the Student Portal..."
+                className="w-full px-3 py-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                rows={4}
+              />
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSubmit}>
+                Submit Feedback
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+import { CheckCircle } from "lucide-react";
+
+/* --- ProfileDetailsDialog Component --- */
+function ProfileDetailsDialog() {
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    try {
+      const raw = safeGet("studentProfile");
+      if (raw) setProfile(JSON.parse(raw));
+    } catch { }
+  }, []);
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="ghost">Profile Details</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Your Profile Details</DialogTitle>
+        </DialogHeader>
+
+        {profile ? (
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Name</label>
+                <p className="text-base font-medium">{profile.name || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Email</label>
+                <p className="text-base font-medium">{profile.email || "—"}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Phone</label>
+                <p className="text-base font-medium">{profile.phone || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Date of Birth</label>
+                <p className="text-base font-medium">{profile.dob || "—"}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Aadhar Verified</label>
+                <p className="text-base font-medium">{profile.aadharVerified ? "✓ Yes" : "✗ No"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Gender</label>
+                <p className="text-base font-medium">{profile.gender || "—"}</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Skills</label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {Array.isArray(profile.skills) && profile.skills.length > 0 ? (
+                  profile.skills.map((skill: string, idx: number) => (
+                    <span key={idx} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                      {skill}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">—</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Highest Qualification</label>
+                <p className="text-base font-medium">{profile.highestQualification || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">GPA/Marks</label>
+                <p className="text-base font-medium">{profile.marksGPA || "—"}</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Latest Education Institution</label>
+              <p className="text-base font-medium">{profile.latestEducationInstitution || "—"}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Family Income</label>
+                <p className="text-base font-medium">{profile.familyIncome || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">ITR Provided</label>
+                <p className="text-base font-medium">{profile.itrProvided ? "✓ Yes" : "✗ No"}</p>
+              </div>
+            </div>
+
+            {profile.certifications && profile.certifications.length > 0 && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Certifications</label>
+                <div className="mt-2 space-y-1">
+                  {profile.certifications.map((cert: string, idx: number) => (
+                    <p key={idx} className="text-sm">• {cert}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="py-8 text-center text-muted-foreground">
+            <p>No profile information found. Please complete your registration first.</p>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ------------------ StudentPortal main component ------------------ */
 export default function StudentPortal() {
-  // Use AuthProvider to check authentication
   const { isAuthenticated, user } = useAuth();
   const authed = isAuthenticated && user?.role === "student";
   const hasProfile = isStudentProfileComplete();
 
-  // Application list: maintain up to 6 preferred internships in decreasing priority order (index 0 = highest)
   const [appliedList, setAppliedList] = useState<any[]>(() => {
     try {
       const raw = safeGet("appliedInternships");
@@ -180,39 +398,37 @@ export default function StudentPortal() {
   });
   const [showApplied, setShowApplied] = useState(false);
 
-  // Preference inputs (two preferred locations)
   const [prefLoc1, setPrefLoc1] = useState("");
   const [prefLoc2, setPrefLoc2] = useState("");
 
-  // Offered internships (offers made to the user) — persist in sessionStorage
   const [offered, setOffered] = useState<any[]>(() => {
     try {
       const raw = safeGet("offeredInternships");
       if (raw) return JSON.parse(raw);
     } catch { }
-    // default: populate two offers for demo
     return [
       { ...SAMPLE_INTERNSHIPS[0], offerLetter: "Offer Letter: Congratulations! You are offered the Product Management internship.", status: "pending" },
       { ...SAMPLE_INTERNSHIPS[5], offerLetter: "Offer Letter: Congratulations! You are offered the Machine Learning internship.", status: "pending" },
     ];
   });
 
-  // save offered list
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [selectedFromSearch, setSelectedFromSearch] = useState<any>(null);
+
   useEffect(() => {
     try {
       safeSet("offeredInternships", JSON.stringify(offered));
     } catch { }
   }, [offered]);
 
-  // debug: log auth/profile as soon as component mounts (remove later if you like)
   useEffect(() => {
     console.log("StudentPortal mount -> authed:", authed, "hasProfile:", hasProfile);
-  }, []); // run once
+  }, []);
 
-  // initialStage: explicit logic - redirect to login if not authenticated
   let initialStage: "eligibility" | "auth" | "profile" | "dashboard" = "dashboard";
   if (!authed) {
-    // Will be redirected to login by useEffect below
     initialStage = "dashboard";
   } else if (!hasProfile) {
     initialStage = "profile";
@@ -222,15 +438,12 @@ export default function StudentPortal() {
 
   const [stage, setStage] = useState<"eligibility" | "auth" | "profile" | "dashboard">(initialStage);
   const [activeTab, setActiveTab] = useState<"match" | "preference" | "offered" | "tracker">("match");
-  const [feedbackText, setFeedbackText] = useState("");
 
-  // keep stage in sync if sessionStorage changes elsewhere (other tabs)
   useEffect(() => {
     function onStorage(e: StorageEvent) {
       if (e.key === "portalAuth" || e.key === "studentProfile") {
         const nowAuthed = safeGet("portalAuth") === "student";
         if (!nowAuthed) {
-          // Redirect to login instead of showing auth stage
           window.location.href = "/login";
           return;
         }
@@ -241,25 +454,14 @@ export default function StudentPortal() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // persist applied list whenever it changes
   useEffect(() => {
     try {
       safeSet("appliedInternships", JSON.stringify(appliedList));
     } catch { }
   }, [appliedList]);
 
-  // After auth completes, go to profile if the profile isn't complete.
-  function handleAuthComplete() {
-    setStage(isStudentProfileComplete() ? "dashboard" : "profile");
-  }
-
   function handleProfileComplete() {
     setStage("dashboard");
-  }
-
-  function handleFeedbackSubmit() {
-    console.log("Feedback submitted:", feedbackText);
-    setFeedbackText("");
   }
 
   function leavePortal() {
@@ -270,11 +472,7 @@ export default function StudentPortal() {
     window.location.replace("/");
   }
 
-  // Add an internship to the student's preferred list (max 6). We keep decreasing priority order
-  // where index 0 is highest priority (the earliest-applied item). We append new items to the end
-  // so the list shows priorities in order of application.
   function handleApply(internship: any) {
-    // if already applied, toggle showApplied to true and open the list
     const exists = appliedList.some((i) => i.internshipId === internship.internshipId);
     if (exists) {
       setShowApplied(true);
@@ -296,7 +494,6 @@ export default function StudentPortal() {
     setAppliedList(next);
   }
 
-  // If the user wants to reorder priorities (move up / down)
   function moveApplied(id: string, dir: "up" | "down") {
     const idx = appliedList.findIndex((i) => i.internshipId === id);
     if (idx === -1) return;
@@ -307,24 +504,47 @@ export default function StudentPortal() {
     setAppliedList(copy);
   }
 
-  // Offer accept/reject handlers
   function acceptOffer(internshipId: string) {
     setOffered((prev) => prev.map((o) => o.internshipId === internshipId ? { ...o, status: "accepted" } : o));
     alert("You accepted the offer. Congratulations!");
   }
+
   function rejectOffer(internshipId: string) {
     setOffered((prev) => prev.map((o) => o.internshipId === internshipId ? { ...o, status: "rejected" } : o));
     alert("You rejected the offer.");
   }
 
-  // If not authenticated, redirect to login page instead of showing intermediate auth page
   useEffect(() => {
     if (!authed) {
       window.location.href = "/login";
     }
   }, [authed]);
 
-  /* ------------------- Stage: eligibility (optional) ------------------- */
+  // Search functionality
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults([]);
+      setSelectedFromSearch(null);
+      return;
+    }
+
+    const q = query.toLowerCase();
+    const results = SAMPLE_INTERNSHIPS.filter(
+      (job) =>
+        job.internshipId.toLowerCase().includes(q) ||
+        job.title.toLowerCase().includes(q) ||
+        job.companyId.toLowerCase().includes(q)
+    );
+    setSearchResults(results);
+  };
+
+  const handleSelectFromSearch = (job: any) => {
+    setSelectedFromSearch(job);
+    setSearchQuery("");
+    setSearchResults([]);
+  };
+
   if (stage === "eligibility") {
     return (
       <div className="min-h-screen bg-background">
@@ -340,9 +560,6 @@ export default function StudentPortal() {
     );
   }
 
-  /* ------------------- Stage: auth - REMOVED, now redirects to /login ------------------- */
-
-  /* ------------------- Stage: profile (registration required) ------------------- */
   if (stage === "profile") {
     return (
       <div className="min-h-screen bg-background">
@@ -365,19 +582,16 @@ export default function StudentPortal() {
     );
   }
 
-  /* ------------------- Stage: dashboard (main) ------------------- */
-  // At this point user is authed and profile is complete.
   let profile: any = null;
   try {
     const raw = safeGet("studentProfile");
     if (raw) profile = JSON.parse(raw);
   } catch { }
 
-  const eligible = SAMPLE_INTERNSHIPS; // for now show all
+  const eligible = SAMPLE_INTERNSHIPS;
 
-  // compute internships matching preferred locations
   function matchesPreferred(job: any) {
-    if (!prefLoc1 && !prefLoc2) return true; // if no preference set, show all
+    if (!prefLoc1 && !prefLoc2) return true;
     const loc = (job.location || "").toLowerCase();
     const p1 = prefLoc1.trim().toLowerCase();
     const p2 = prefLoc2.trim().toLowerCase();
@@ -398,14 +612,9 @@ export default function StudentPortal() {
             <p className="text-muted-foreground">Welcome back! Discover your perfect internship</p>
           </div>
 
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setStage("profile")} data-testid="button-edit-profile">
-              Set Profile
-            </Button>
-            <Button variant="outline" onClick={() => { /* open feedback dialog */ }}>
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Feedback
-            </Button>
+          <div className="flex gap-2 flex-wrap">
+            <ProfileDetailsDialog />
+            <FeedbackDialog />
             <LogoutButton />
           </div>
         </div>
@@ -430,7 +639,7 @@ export default function StudentPortal() {
             </TabsTrigger>
           </TabsList>
 
-          {/* ----------------- MATCH (eligible internships list) ----------------- */}
+          {/* MATCH TAB */}
           <TabsContent value="match" className="space-y-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center mb-4">
               <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
@@ -441,10 +650,76 @@ export default function StudentPortal() {
               <p className="text-muted-foreground">Based on your profile — complete your profile for more accurate matches</p>
             </motion.div>
 
-            {/* Applied / Preference list panel (shows after user clicks Apply) */}
-            {/* Preference list should always be visible */}
+            {/* Search Bar */}
+            <div className="max-w-2xl mx-auto mb-6 relative">
+              <div className="relative flex items-center gap-2 bg-transparent">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search by ID (INT-001), Company (CMP-1001), or Role (Product Management)"
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-transparent border border-muted-foreground rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Search Results Dropdown */}
+              {searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-muted-foreground rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto">
+                  {searchResults.map((job) => (
+                    <button
+                      key={job.internshipId}
+                      onClick={() => handleSelectFromSearch(job)}
+                      className="w-full px-4 py-3 text-left hover:bg-muted/50 border-b last:border-b-0 transition-colors"
+                    >
+                      <div className="font-medium text-foreground">{job.title}</div>
+                      <div className="text-sm text-muted-foreground">{job.internshipId} • {job.companyId}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Selected from Search Display */}
+            {selectedFromSearch && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-2xl mx-auto mb-6 p-4 bg-transparent border border-primary/30 rounded-lg backdrop-blur-sm"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-semibold text-foreground text-lg">{selectedFromSearch.title}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{selectedFromSearch.internshipId} • {selectedFromSearch.companyId}</p>
+                    <p className="text-sm text-muted-foreground mt-2">{selectedFromSearch.location} • {selectedFromSearch.sector}</p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedFromSearch(null)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      handleApply(selectedFromSearch);
+                      setSelectedFromSearch(null);
+                    }}
+                    disabled={appliedList.some((i) => i.internshipId === selectedFromSearch.internshipId)}
+                  >
+                    {appliedList.some((i) => i.internshipId === selectedFromSearch.internshipId) ? "Already Applied" : "Apply Now"}
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Preference list */}
             {(true) && (
-              <div className="max-w-2xl mx-auto mb-4 p-4 rounded border bg-white">
+              <div className="max-w-2xl mx-auto mb-4 p-4 rounded border bg-card border-muted-foreground/50">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold">Your Preferred Internships (max 6)</h3>
                   <div className="flex gap-2">
@@ -477,7 +752,7 @@ export default function StudentPortal() {
 
             {!profile && (
               <div className="px-4 py-3 rounded bg-yellow-50 border border-yellow-100 text-sm text-yellow-800">
-                Complete your profile (Set Profile) to get more accurate, AI-powered matches.
+                Complete your profile (Profile Details) to get more accurate, AI-powered matches.
               </div>
             )}
 
@@ -523,22 +798,22 @@ Description: ${job.description || "—"}`);
             )}
           </TabsContent>
 
-          {/* ----------------- PREFERENCE (replaces SEARCH) ----------------- */}
+          {/* PREFERENCE TAB */}
           <TabsContent value="preference" className="space-y-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center mb-4">
               <h2 className="text-xl font-semibold">Set Your Preferred Locations</h2>
               <p className="text-muted-foreground">Enter up to two preferred locations. Internships matching either location will be shown below.</p>
             </motion.div>
 
-            <div className="max-w-2xl mx-auto bg-white p-4 rounded border space-y-4">
+            <div className="max-w-2xl mx-auto bg-card p-4 rounded border border-muted-foreground/50 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm mb-1">Preferred Location 1</label>
-                  <input value={prefLoc1} onChange={(e) => setPrefLoc1(e.target.value)} placeholder="e.g. Delhi" className="w-full px-3 py-2 border rounded" />
+                  <input value={prefLoc1} onChange={(e) => setPrefLoc1(e.target.value)} placeholder="e.g. Delhi" className="w-full px-3 py-2 border border-muted-foreground rounded bg-transparent text-foreground placeholder-muted-foreground" />
                 </div>
                 <div>
                   <label className="block text-sm mb-1">Preferred Location 2</label>
-                  <input value={prefLoc2} onChange={(e) => setPrefLoc2(e.target.value)} placeholder="e.g. Bangalore" className="w-full px-3 py-2 border rounded" />
+                  <input value={prefLoc2} onChange={(e) => setPrefLoc2(e.target.value)} placeholder="e.g. Bangalore" className="w-full px-3 py-2 border border-muted-foreground rounded bg-transparent text-foreground placeholder-muted-foreground" />
                 </div>
               </div>
 
@@ -578,7 +853,7 @@ Description: ${job.description || "—"}`);
             </div>
           </TabsContent>
 
-          {/* ----------------- OFFERED ----------------- */}
+          {/* OFFERED TAB */}
           <TabsContent value="offered" className="space-y-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center mb-4">
               <h2 className="text-xl font-semibold">Offered Internships</h2>
@@ -627,7 +902,7 @@ Description: ${job.description || "—"}`);
             )}
           </TabsContent>
 
-          {/* ----------------- TRACKER ----------------- */}
+          {/* TRACKER TAB */}
           <TabsContent value="tracker">
             <ApplicationTracker />
           </TabsContent>
@@ -637,21 +912,11 @@ Description: ${job.description || "—"}`);
   );
 }
 
-/* --- registration completeness check (updated to match RegistrationWithAadhar.tsx step 4) --- */
 function isStudentProfileComplete(): boolean {
   try {
     const raw = safeGet("studentProfile");
     if (!raw) return false;
     const p = JSON.parse(raw);
-
-    // New required fields (from RegistrationWithAadhar step 3 + 4):
-    // - aadharVerified === true
-    // - name exists
-    // - skills is an array with at least one entry
-    // - highestQualification exists
-    // - marksGPA is a number between 0 and 10
-    // - latestEducationInstitution exists
-    // We still accept optional fields like familyIncome, itrProvided, certifications
 
     const hasName = !!p?.name;
     const hasAadhar = p?.aadharVerified === true;
