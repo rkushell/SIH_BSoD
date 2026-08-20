@@ -22,7 +22,7 @@ A centralized, secure, and ML-driven platform for fair, transparent, and auditab
 
 ## Overview
 
-Large-scale internship allocation programs often suffer from manual errors, lack of transparency, and difficulties in enforcing reservation policies. SIH_BSoD solves these issues through automated algorithmic matching (based on the Gale-Shapley stable matching model), machine learning-based student scoring, and a secure full-stack portal.
+Large-scale internship allocation programs often suffer from manual errors, lack of transparency, and difficulties in enforcing reservation policies. SIH_BSoD solves these issues through automated algorithmic matching (based on a multi-round greedy allocation with simulated acceptance), machine learning-based student scoring, and a secure full-stack portal.
 
 ---
 
@@ -93,7 +93,7 @@ Large-scale internship allocation programs often suffer from manual errors, lack
 ┌──────────────────────────────────┐
 │ ML Allocation Engine (Python)    │
 │                                  │
-│ - Gale–Shapley Stable Matching   │
+│ - Multi-Round Greedy Allocation    │
 │ - ML Scoring                     │
 │ - Reservation Enforcement        │
 │ - Fairness Metrics               │
@@ -150,7 +150,7 @@ SIH_BSoD/
             └── app/
                 ├── main.py      # FastAPI Server
                 ├── models.py    # ML & data models
-                └── services/    # Core ML logic & Gale-Shapley matching
+                └── services/    # Core ML logic & Multi-round allocation
 ```
 
 ---
